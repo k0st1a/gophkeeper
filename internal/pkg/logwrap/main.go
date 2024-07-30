@@ -11,9 +11,11 @@ import (
 
 func New(level string) error {
 	// https://github.com/rs/zerolog?tab=readme-ov-file#pretty-logging
+	//nolint // need here
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
 
 	// https://github.com/rs/zerolog?tab=readme-ov-file#add-file-and-line-number-to-log
+	//nolint // need here
 	log.Logger = log.With().Caller().Logger()
 
 	switch level {
