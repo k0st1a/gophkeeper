@@ -1,5 +1,14 @@
 # for debug use make SHELL="sh -x"
 
+.DEFAULT_GOAL := build
+
+# Используем := чтобы переменная содержала значение на на момент определения этой переменной, см
+# https://ftp.gnu.org/old-gnu/Manuals/make-3.79.1/html_chapter/make_6.html#SEC59
+# TODO: так нужно задать все переменные в Makefile
+BUILD_VERSION := 0.0.1
+BUILD_DATE := $(shell date -u +"%Y-%m-%d %H:%M:%S:%N %Z")
+BUILD_COMMIT := $(shell git rev-parse HEAD)
+
 .PHONY:protobuf-install
 protobuf-install:
 	# from https://grpc.io/docs/protoc-installation/#:~:text=Linux%2C%20using%20apt%20or%20apt%2Dget
@@ -19,3 +28,25 @@ protobuf-generate:
 		--go-grpc_out=. \
 		--go-grpc_opt=paths=source_relative \
 		${PROTOBUF_PATH}/auth/model.proto
+
+
+GOLANG_LDFLAGS := -ldflags "-X 'main.buildVersion=${BUILD_VERSION}' \
+                            -X 'main.buildDate=${BUILD_DATE}' \
+                            -X 'main.buildCommit=${BUILD_COMMIT}'"
+
+.PHONY:build
+build:
+	go build -C ./cmd/server/ -o server -buildvcs=false ${GOLANG_LDFLAGS}
+
+.PHONY:godoc
+godoc:
+	go install golang.org/x/pkgsite/cmd/pkgsite@latest
+	~/go/bin/pkgsite -open .
+
+.PHONY:statictest
+statictest:
+	go vet -vettool=$$(which statictest) ./...
+
+.PHONY:test
+test: build statictest
+	go test -v -race -count=1 ./...
