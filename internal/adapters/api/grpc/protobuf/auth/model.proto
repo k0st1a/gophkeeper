@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option go_package = "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/protobuf/auth";
+
+// Указывает пространство имен для сервиса и сообщений. Помогает избегать конфликтов имен.
+package auth;
+
+// Auth is service for managing permissions and roles.
+service Auth {
+  // Register registers a new user.
+  rpc Register (RegisterRequest) returns (RegisterResponse);
+  // Login logs in a user and returns an auth token.
+  rpc Login (LoginRequest) returns (LoginResponse);
+}
+
+message RegisterRequest {
+  string email = 1; // Email of the user to register.
+  string password = 2; // Password of the user to register.
+}
+
+message RegisterResponse {
+  int64 user_id = 1; // User ID of the registered user.
+}
+
+message LoginRequest {
+  string email = 1; // Email of the user to login.
+  string password = 2; // Password of the user to login.
+}
+
+message LoginResponse {
+  string token = 1; // Auth token of the logged in user.
+}
