@@ -6,20 +6,25 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/protobuf/auth"
+	pb "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/gen/proto"
 	"github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/server/handler"
 	"github.com/k0st1a/gophkeeper/internal/application/server/config"
+	"github.com/k0st1a/gophkeeper/internal/pkg/auth"
 	"github.com/k0st1a/gophkeeper/internal/pkg/grpcserver"
+	"github.com/k0st1a/gophkeeper/internal/pkg/user"
 )
 
-func New(cfg *config.Config) (*grpcserver.Server, error) {
-	h := &handler.AuthServer{}
+func New(cfg *config.Config, u user.Managment, a auth.UserAuthentication) (*grpcserver.Server, error) {
+	h := &handler.AuthServer{
+		User: u,
+		Auth: a,
+	}
 
 	// создаём gRPC-сервер без зарегистрированной службы
 	s := grpc.NewServer()
 
 	// регистрируем сервис
-	auth.RegisterAuthServer(s, h)
+	pb.RegisterAuthServiceServer(s, h)
 
 	srv, err := grpcserver.New(cfg.Address, s)
 	if err != nil {
