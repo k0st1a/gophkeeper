@@ -1,0 +1,15 @@
+services:
+  postgres:
+    container_name: ${PG_DOCKER_CONTEINER_NAME}
+    image: ${PG_IMAGE}
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DB}
+    ports:
+        - ${PG_PORT}:${PG_PORT}
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${PG_USER} -d ${PG_DB}'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3

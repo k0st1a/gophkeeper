@@ -2,6 +2,15 @@
 
 .DEFAULT_GOAL := build
 
+PG_USER = "gophkeeper-user"
+PG_PASSWORD = "gophkeeper-password"
+PG_DB = "db-gophkeeper"
+PG_HOST = "localhost"
+PG_PORT = "5432"
+PG_DATABASE_DSN = "postgres://${PG_USER}:${PG_PASSWORD}@${PG_HOST}:${PG_PORT}/${PG_DB}?sslmode=disable"
+PG_IMAGE = "postgres:16.3-bookworm"
+PG_DOCKER_CONTEINER_NAME = "gophkeeper-pg-16.3"
+
 # Используем := чтобы переменная содержала значение на на момент определения этой переменной, см
 # https://ftp.gnu.org/old-gnu/Manuals/make-3.79.1/html_chapter/make_6.html#SEC59
 # TODO: так нужно задать все переменные в Makefile
@@ -51,6 +60,37 @@ statictest:
 test: build statictest
 	go test -v -race -count=1 ./...
 
+##--------------------------------------------------------------------
+## DB POSTGRESQL
+##--------------------------------------------------------------------
+
+.PHONY: db-up
+db-up:
+	PG_USER=${PG_USER} \
+	PG_PASSWORD=${PG_PASSWORD} \
+	PG_DB=${PG_DB} \
+	PG_HOST=${PG_HOST} \
+	PG_PORT=${PG_PORT} \
+	PG_DATABASE_DSN=${PG_DATABASE_DSN} \
+	PG_IMAGE=${PG_IMAGE} \
+	PG_DOCKER_CONTEINER_NAME=${PG_DOCKER_CONTEINER_NAME} \
+	docker compose -f ./docker-compose.yml up -d postgres
+
+.PHONY: db-down
+db-down:
+	PG_USER=${PG_USER} \
+	PG_PASSWORD=${PG_PASSWORD} \
+	PG_DB=${PG_DB} \
+	PG_HOST=${PG_HOST} \
+	PG_PORT=${PG_PORT} \
+	PG_DATABASE_DSN=${PG_DATABASE_DSN} \
+	PG_IMAGE=${PG_IMAGE} \
+	PG_DOCKER_CONTEINER_NAME=${PG_DOCKER_CONTEINER_NAME} \
+	docker compose -f ./docker-compose.yml down postgres
+
+##--------------------------------------------------------------------
+## GOLANGCI-LINT
+##--------------------------------------------------------------------
 GOLANGCI_LINT_CACHE?=/tmp/praktikum-golangci-lint-cache
 
 .PHONY: golangci-lint-run
