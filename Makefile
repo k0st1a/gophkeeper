@@ -114,6 +114,23 @@ statictest:
 test: build statictest 
 	go test -v -race -count=1 ./...
 
+.PHONY: cover
+cover:
+	mkdir -pv ./cover && \
+	go test -v -coverpkg=./... -coverprofile=./cover/cover.profile.tmp ./... && \
+	cat ./cover/cover.profile.tmp \
+		| grep -v "model.go" \
+		| grep -v "${PROTOBUF_PATH}" \
+		> ./cover/cover.profile && \
+	rm ./cover/cover.profile.tmp && \
+	go tool cover -func ./cover/cover.profile && \
+	go tool cover -html ./cover/cover.profile -o ./cover/cover.html
+
+.PHONY: cover-clean
+cover-clean:
+	rm -v -f ./cover/cover.profile ./cover/cover.html && \
+	rm -v -r ./cover
+
 .PHONY:gophkeeper-run-with-args
 gophkeeper-run-with-args: build db-up
 	chmod +x ./cmd/server/server && \
