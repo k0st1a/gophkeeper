@@ -103,11 +103,22 @@ godoc:
 
 .PHONY:statictest
 statictest:
-	go vet -vettool=$$(which statictest) ./...
+	# statictest не переваривает имя пакета third_party 
+	go vet -vettool=$$(which statictest) ./internal/... ./cmd/...
 
 .PHONY:test
 test: build statictest
 	go test -v -race -count=1 ./...
+
+##--------------------------------------------------------------------
+## SWAGGER UI GENERATE
+##--------------------------------------------------------------------
+SWAGGER_UI_VERSION = v4.15.5
+.PHONY:swagger-ui-generate
+swagger-ui-generate: openapi2-generate
+	chmod +x ./scripts/generate-swagger-ui.sh && \
+	SWAGGER_UI_VERSION=$(SWAGGER_UI_VERSION) \
+		./scripts/generate-swagger-ui.sh
 
 ##--------------------------------------------------------------------
 ## DB POSTGRESQL
