@@ -17,16 +17,22 @@ import (
 )
 
 // getOpenAPIHandler serves an OpenAPI UI.
-// nolint:lll not need there
 // Adapted from https://github.com/philips/grpc-gateway-example/blob/a269bcb5931ca92be0ceae6130ac27ae89582ecc/cmd/serve.go#L63
-func getOpenAPIHandler() http.Handler {
-	mime.AddExtensionType(".svg", "image/svg+xml")
+//
+//nolint:lll // not need there
+func getOpenAPIHandler() (http.Handler, error) {
+	err := mime.AddExtensionType(".svg", "image/svg+xml")
+	if err != nil {
+		return nil, fmt.Errorf("mime add extension type error:%w", err)
+	}
+
 	// Use subdirectory in embedded files
 	subFS, err := fs.Sub(third_party.OpenAPI, "OpenAPI")
 	if err != nil {
-		panic("couldn't create sub filesystem: " + err.Error())
+		return nil, fmt.Errorf("couldn't create sub filesystem: %w", err)
 	}
-	return http.FileServer(http.FS(subFS))
+
+	return http.FileServer(http.FS(subFS)), nil
 }
 
 // Run runs the gRPC-Gateway, dialling the provided address.
@@ -44,7 +50,10 @@ func Run(ctx context.Context, dialAddr string, gatewayAddr string) error {
 		return fmt.Errorf("failed to register gateway: %w", err)
 	}
 
-	oa := getOpenAPIHandler()
+	oa, err := getOpenAPIHandler()
+	if err != nil {
+		return err
+	}
 
 	gwServer := &http.Server{
 		Addr: gatewayAddr,

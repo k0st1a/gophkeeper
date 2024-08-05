@@ -33,6 +33,7 @@ func New(level string) error {
 	log.Logger = log.With().Caller().Logger()
 
 	// https://github.com/rs/zerolog?tab=readme-ov-file#contextcontext-integration
+	//nolint // need here
 	log.Logger = log.Logger.Hook(tracingHook{})
 
 	switch level {
