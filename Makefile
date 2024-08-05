@@ -2,6 +2,10 @@
 
 .DEFAULT_GOAL := build
 
+GK_HOST = "0.0.0.0"
+GK_PORT = "8080"
+GK_HTTP_PORT = "8081"
+
 PG_USER = "gophkeeper-user"
 PG_PASSWORD = "gophkeeper-password"
 PG_DB = "db-gophkeeper"
@@ -103,12 +107,21 @@ godoc:
 
 .PHONY:statictest
 statictest:
-	# statictest не переваривает имя пакета third_party 
+	# statictest не переваривает имя пакета third_party
 	go vet -vettool=$$(which statictest) ./internal/... ./cmd/...
 
 .PHONY:test
-test: build statictest
+test: build statictest 
 	go test -v -race -count=1 ./...
+
+.PHONY:gophkeeper-run-with-args
+gophkeeper-run-with-args: build db-up
+	chmod +x ./cmd/server/server && \
+		./cmd/server/server \
+			-log-level debug \
+			-address ${GK_HOST}:${GK_PORT} \
+			-http-address ${GK_HOST}:${GK_HTTP_PORT} \
+			-dsn ${PG_DATABASE_DSN}
 
 ##--------------------------------------------------------------------
 ## SWAGGER UI GENERATE
