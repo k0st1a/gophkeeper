@@ -31,18 +31,18 @@ func NewDB(ctx context.Context, dsn string) (*db, error) {
 	}, nil
 }
 
-func (d *db) CreateUser(ctx context.Context, login, password string) (int64, error) {
-	log.Ctx(ctx).Printf("CreateUser, login:%s, password:%s", login, password)
+func (d *db) CreateUser(ctx context.Context, email, password string) (int64, error) {
+	log.Ctx(ctx).Printf("CreateUser, Email:%s, password:%s", email, password)
 	var id int64
 
 	err := d.pool.QueryRow(ctx,
-		"INSERT INTO users (login,password) VALUES($1,$2) "+
+		"INSERT INTO users (email,password) VALUES($1,$2) "+
 			"ON CONFLICT DO NOTHING "+
 			"RETURNING id",
-		login, password).Scan(&id)
+		email, password).Scan(&id)
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return 0, ports.ErrLoginAlreadyBusy
+		return 0, ports.ErrEmailAlreadyBusy
 	}
 
 	if err != nil {
@@ -52,12 +52,12 @@ func (d *db) CreateUser(ctx context.Context, login, password string) (int64, err
 	return id, nil
 }
 
-func (d *db) GetUserIDAndPassword(ctx context.Context, login string) (int64, string, error) {
-	log.Ctx(ctx).Printf("GetUserIDAndPassword, login:%s", login)
+func (d *db) GetUserIDAndPassword(ctx context.Context, email string) (int64, string, error) {
+	log.Ctx(ctx).Printf("GetUserIDAndPassword, Email:%s", email)
 	var id int64
 	var password string
 
-	err := d.pool.QueryRow(ctx, "SELECT id, password FROM users WHERE login = $1", login).Scan(&id, &password)
+	err := d.pool.QueryRow(ctx, "SELECT id, password FROM users WHERE email = $1", email).Scan(&id, &password)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return 0, "", ports.ErrUserNotFound
 	}
