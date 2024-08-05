@@ -18,26 +18,75 @@ BUILD_VERSION := 0.0.1
 BUILD_DATE := $(shell date -u +"%Y-%m-%d %H:%M:%S:%N %Z")
 BUILD_COMMIT := $(shell git rev-parse HEAD)
 
+##--------------------------------------------------------------------
+## PROTOBUF INSTALL
+##--------------------------------------------------------------------
 .PHONY:protobuf-install
 protobuf-install:
-	# from https://grpc.io/docs/protoc-installation/#:~:text=Linux%2C%20using%20apt%20or%20apt%2Dget
-	sudo apt install -y protobuf-compiler
-	# from https://practicum.yandex.ru/learn/go-advanced/courses/65ce3d44-da98-4684-9499-465ff6cc6c64/sprints/226895/topics/30311053-9716-4af0-9a23-f4fa0725f918/lessons/fa184729-fbbd-4a1c-ae11-4e12f66b7f64/#:~:text=%D0%A3%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0%20%D1%83%D1%82%D0%B8%D0%BB%D0%B8%D1%82%20gRPC
-	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	sudo apt install -y protobuf-compiler && \
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && \
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-	export PATH="${PATH}:$(go env GOPATH)/bin"
+	# TODO: отразить в документации установку переменной окружения
+	# export PATH="${PATH}:$(shell go env GOPATH)/bin"
 
-PROTOBUF_PATH := "./internal/adapters/api/grpc/protobuf"
+##--------------------------------------------------------------------
+## PROTOBUF GENERATE
+##--------------------------------------------------------------------
+## TODO: Версии пакетов должны быть одни и теже в рамках Makefile.
+
+GO_PATH := $(shell go env GOPATH)
+PROTOBUF_PATH := "./proto"
 
 .PHONY:protobuf-generate
 protobuf-generate:
 	protoc \
-		--go_out=. \
+		-I${GO_PATH}/pkg/mod/github.com/grpc-ecosystem/grpc-gateway@v1.12.1/third_party/googleapis \
+		-I${GO_PATH}/pkg/mod/github.com/protocolbuffers/protobuf@v5.27.3+incompatible/src \
+		-I. \
+		-I${PROTOBUF_PATH} \
+		--grpc-gateway_opt=Mauth.proto=. \
+		--grpc-gateway_opt=paths=source_relative \
+		--grpc-gateway_out=./internal/adapters/api/grpc/gen/proto \
+		--go_opt=Mauth.proto=. \
 		--go_opt=paths=source_relative \
-		--go-grpc_out=. \
+		--go_out=./internal/adapters/api/grpc/gen/proto \
+		--go-grpc_opt=Mauth.proto=. \
+		--go-grpc_out=./internal/adapters/api/grpc/gen/proto \
 		--go-grpc_opt=paths=source_relative \
-		${PROTOBUF_PATH}/auth/model.proto
+		auth.proto
 
+##--------------------------------------------------------------------
+## OPENAPI2 INSTALL
+##--------------------------------------------------------------------
+## TODO: Указать конкретные версии пакетов для install?
+
+.PHONY:openapi2-install
+openapi2-install:
+	go install \
+		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
+		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
+		google.golang.org/protobuf/cmd/protoc-gen-go \
+		google.golang.org/grpc/cmd/protoc-gen-go-grpc
+
+##--------------------------------------------------------------------
+## OPENAPI2 GENERATE
+##--------------------------------------------------------------------
+## TODO: Версии пакетов должны быть одни и теже в рамках Makefile.
+
+.PHONY:openapi2-generate
+openapi2-generate: openapi2-install
+	mkdir -pv ./third_party/OpenAPI && \
+	protoc \
+		-I${GO_PATH}/pkg/mod/github.com/grpc-ecosystem/grpc-gateway@v1.12.1/third_party/googleapis \
+		-I${GO_PATH}/pkg/mod/github.com/protocolbuffers/protobuf@v5.27.3+incompatible/src \
+		-I${PROTOBUF_PATH} \
+		--openapiv2_opt=Mauth.proto=. \
+		--openapiv2_out=./third_party/OpenAPI \
+		auth.proto
+
+##--------------------------------------------------------------------
+## BUILD, TESTS, RUN
+##--------------------------------------------------------------------
 
 GOLANG_LDFLAGS := -ldflags "-X 'main.buildVersion=${BUILD_VERSION}' \
                             -X 'main.buildDate=${BUILD_DATE}' \
