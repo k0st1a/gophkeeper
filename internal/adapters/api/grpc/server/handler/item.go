@@ -107,15 +107,12 @@ func (s *ItemServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListRes
 		return nil, status.Errorf(codes.Internal, "list item error")
 	}
 
-	items := make([]*pb.ItemInfo, 0, len(l))
+	items := make([]*pb.ListItemInfo, 0, len(l))
 	for _, i := range l {
-		d := &pb.ItemInfo{
-			Id: i.ID,
-			Item: &pb.Item{
-				Name: i.Name,
-				Type: i.Type,
-				Data: i.Data,
-			},
+		d := &pb.ListItemInfo{
+			Id:   i.ID,
+			Name: i.Name,
+			Type: i.Type,
 		}
 		items = append(items, d)
 	}

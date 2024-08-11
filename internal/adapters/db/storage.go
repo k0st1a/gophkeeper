@@ -141,7 +141,7 @@ func (d *db) ListItem(ctx context.Context, userID int64) ([]ports.ItemInfo, erro
 	var items []ports.ItemInfo
 
 	rows, err := d.pool.Query(ctx,
-		"SELECT id, name, type, data, created_at FROM items WHERE user_id = $1",
+		"SELECT id, name, type, created_at FROM items WHERE user_id = $1",
 		userID)
 	if err != nil {
 		return items, fmt.Errorf("query error of list item:%w", err)
@@ -153,7 +153,6 @@ func (d *db) ListItem(ctx context.Context, userID int64) ([]ports.ItemInfo, erro
 			&item.ID,
 			&item.Name,
 			&item.Type,
-			&item.Data,
 			&item.CreatedAt,
 		)
 		if err != nil {
