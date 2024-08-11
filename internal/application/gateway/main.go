@@ -45,9 +45,14 @@ func Run(ctx context.Context, dialAddr string, gatewayAddr string) error {
 	}
 
 	gwmux := runtime.NewServeMux()
-	err = pb.RegisterAuthServiceHandler(ctx, gwmux, conn)
+	err = pb.RegisterUsersServiceHandler(ctx, gwmux, conn)
 	if err != nil {
-		return fmt.Errorf("failed to register gateway: %w", err)
+		return fmt.Errorf("failed to register users gateway: %w", err)
+	}
+
+	err = pb.RegisterItemsServiceHandler(ctx, gwmux, conn)
+	if err != nil {
+		return fmt.Errorf("failed to register items gateway: %w", err)
 	}
 
 	oa, err := getOpenAPIHandler()

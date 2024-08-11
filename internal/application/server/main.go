@@ -13,7 +13,6 @@ import (
 	"github.com/k0st1a/gophkeeper/internal/application/server/config"
 	"github.com/k0st1a/gophkeeper/internal/pkg/auth"
 	"github.com/k0st1a/gophkeeper/internal/pkg/logwrap"
-	"github.com/k0st1a/gophkeeper/internal/pkg/user"
 	"github.com/rs/zerolog/log"
 )
 
@@ -38,10 +37,9 @@ func Run() error {
 	}
 	defer db.Close()
 
-	user := user.New(db)
 	auth := auth.New(cfg.SecretKey)
 
-	srv, err := grpcserver.New(cfg, user, auth)
+	srv, err := grpcserver.New(cfg, db, auth, db)
 	if err != nil {
 		return fmt.Errorf("make grpc server error:%w", err)
 	}
