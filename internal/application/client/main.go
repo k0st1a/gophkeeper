@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"os/signal"
 	"syscall"
+	"time"
 
+	cliclient "github.com/k0st1a/gophkeeper/internal/adapters/api/cli/client"
 	grpcclient "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/client"
 	"github.com/k0st1a/gophkeeper/internal/application/client/config"
-	"github.com/k0st1a/gophkeeper/internal/pkg/auth"
 	"github.com/k0st1a/gophkeeper/internal/pkg/logwrap"
 	"github.com/rs/zerolog/log"
 )
@@ -29,25 +30,25 @@ func Run() error {
 		return fmt.Errorf("logwrap create error:%w", err)
 	}
 
-	auth := auth.New(cfg.SecretKey)
-
-	srv, err := grpcclient.New(cfg, db, auth, db)
+	grpc, err := grpcclient.New(cfg.Address, 3*time.Second)
 	if err != nil {
 		return fmt.Errorf("make grpc client error:%w", err)
 	}
 
+	cli, err := cliclient.New(grpc)
+
 	go func() {
-		err := srv.Run()
+		err := cli.Run()
 		if err != nil {
-			log.Error().Err(err).Msg("failed to run client")
+			log.Error().Err(err).Msg("failed to run cli client")
 		}
 	}()
 
 	<-ctx.Done()
 
-	err = srv.Shutdown()
+	err = cli.Shutdown()
 	if err != nil {
-		log.Error().Err(err).Msg("error of shutdown client")
+		log.Error().Err(err).Msg("error of shutdown cli client")
 	}
 
 	return nil
