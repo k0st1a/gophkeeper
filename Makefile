@@ -43,21 +43,26 @@ PROTOBUF_PATH := "./proto"
 
 .PHONY:protobuf-generate
 protobuf-generate:
+	mkdir -pv ./internal/adapters/api/grpc/gen/proto && \
 	protoc \
 		-I${GO_PATH}/pkg/mod/github.com/grpc-ecosystem/grpc-gateway@v1.12.1/third_party/googleapis \
 		-I${GO_PATH}/pkg/mod/github.com/protocolbuffers/protobuf@v5.27.3+incompatible/src \
 		-I. \
 		-I${PROTOBUF_PATH} \
-		--grpc-gateway_opt=Mauth.proto=. \
+		--grpc-gateway_opt=Mitems.proto=. \
+		--grpc-gateway_opt=Musers.proto=. \
 		--grpc-gateway_opt=paths=source_relative \
 		--grpc-gateway_out=./internal/adapters/api/grpc/gen/proto \
-		--go_opt=Mauth.proto=. \
+		--go_opt=Mitems.proto=. \
+		--go_opt=Musers.proto=. \
 		--go_opt=paths=source_relative \
 		--go_out=./internal/adapters/api/grpc/gen/proto \
-		--go-grpc_opt=Mauth.proto=. \
+		--go-grpc_opt=Mitems.proto=. \
+		--go-grpc_opt=Musers.proto=. \
 		--go-grpc_out=./internal/adapters/api/grpc/gen/proto \
 		--go-grpc_opt=paths=source_relative \
-		auth.proto
+		items.proto \
+		users.proto
 
 ##--------------------------------------------------------------------
 ## OPENAPI2 INSTALL
@@ -84,9 +89,21 @@ openapi2-generate: openapi2-install
 		-I${GO_PATH}/pkg/mod/github.com/grpc-ecosystem/grpc-gateway@v1.12.1/third_party/googleapis \
 		-I${GO_PATH}/pkg/mod/github.com/protocolbuffers/protobuf@v5.27.3+incompatible/src \
 		-I${PROTOBUF_PATH} \
-		--openapiv2_opt=Mauth.proto=. \
+		--openapiv2_opt=Mitems.proto=. \
+		--openapiv2_opt=Musers.proto=. \
 		--openapiv2_out=./third_party/OpenAPI \
-		auth.proto
+		items.proto \
+		users.proto
+
+##--------------------------------------------------------------------
+## SWAGGER UI GENERATE
+##--------------------------------------------------------------------
+SWAGGER_UI_VERSION = v4.15.5
+.PHONY:swagger-ui-generate
+swagger-ui-generate: openapi2-generate
+	chmod +x ./scripts/generate-swagger-ui.sh && \
+	SWAGGER_UI_VERSION=$(SWAGGER_UI_VERSION) \
+		./scripts/generate-swagger-ui.sh
 
 ##--------------------------------------------------------------------
 ## BUILD, TESTS, RUN
@@ -139,16 +156,6 @@ gophkeeper-run-with-args: build db-up
 			-address ${GK_HOST}:${GK_PORT} \
 			-http-address ${GK_HOST}:${GK_HTTP_PORT} \
 			-dsn ${PG_DATABASE_DSN}
-
-##--------------------------------------------------------------------
-## SWAGGER UI GENERATE
-##--------------------------------------------------------------------
-SWAGGER_UI_VERSION = v4.15.5
-.PHONY:swagger-ui-generate
-swagger-ui-generate: openapi2-generate
-	chmod +x ./scripts/generate-swagger-ui.sh && \
-	SWAGGER_UI_VERSION=$(SWAGGER_UI_VERSION) \
-		./scripts/generate-swagger-ui.sh
 
 ##--------------------------------------------------------------------
 ## DB POSTGRESQL
