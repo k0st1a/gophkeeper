@@ -1,13 +1,12 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "auth.proto",
-    "description": "Указывает пространство имен для сервиса и сообщений. Помогает избегать конфликтов имен.",
+    "title": "users.proto",
     "version": "version not set"
   },
   "tags": [
     {
-      "name": "AuthService"
+      "name": "UsersService"
     }
   ],
   "consumes": [
@@ -20,12 +19,12 @@
     "/api/v1/users/login": {
       "post": {
         "summary": "Login logs in a user and returns an auth token.",
-        "operationId": "AuthService_Login",
+        "operationId": "UsersService_Login",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/authLoginResponse"
+              "$ref": "#/definitions/v1LoginResponse"
             }
           },
           "default": {
@@ -41,24 +40,24 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/authLoginRequest"
+              "$ref": "#/definitions/v1LoginRequest"
             }
           }
         ],
         "tags": [
-          "AuthService"
+          "UsersService"
         ]
       }
     },
     "/api/v1/users/register": {
       "post": {
         "summary": "Register registers a new user.",
-        "operationId": "AuthService_Register",
+        "operationId": "UsersService_Register",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/authRegisterResponse"
+              "$ref": "#/definitions/v1RegisterResponse"
             }
           },
           "default": {
@@ -74,62 +73,17 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/authRegisterRequest"
+              "$ref": "#/definitions/v1RegisterRequest"
             }
           }
         ],
         "tags": [
-          "AuthService"
+          "UsersService"
         ]
       }
     }
   },
   "definitions": {
-    "authLoginRequest": {
-      "type": "object",
-      "properties": {
-        "email": {
-          "type": "string",
-          "description": "Email of the user to login."
-        },
-        "password": {
-          "type": "string",
-          "description": "Password of the user to login."
-        }
-      }
-    },
-    "authLoginResponse": {
-      "type": "object",
-      "properties": {
-        "token": {
-          "type": "string",
-          "description": "Auth token of the logged in user."
-        }
-      }
-    },
-    "authRegisterRequest": {
-      "type": "object",
-      "properties": {
-        "email": {
-          "type": "string",
-          "description": "Email of the user to register."
-        },
-        "password": {
-          "type": "string",
-          "description": "Password of the user to register."
-        }
-      }
-    },
-    "authRegisterResponse": {
-      "type": "object",
-      "properties": {
-        "userId": {
-          "type": "string",
-          "format": "int64",
-          "description": "User ID of the registered user."
-        }
-      }
-    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -157,6 +111,44 @@
           }
         }
       }
+    },
+    "v1LoginRequest": {
+      "type": "object",
+      "properties": {
+        "login": {
+          "type": "string",
+          "description": "Login of the user to login."
+        },
+        "password": {
+          "type": "string",
+          "description": "Password of the user to login."
+        }
+      }
+    },
+    "v1LoginResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string",
+          "description": "Auth token of the logged in user."
+        }
+      }
+    },
+    "v1RegisterRequest": {
+      "type": "object",
+      "properties": {
+        "login": {
+          "type": "string",
+          "description": "Login of the user to register."
+        },
+        "password": {
+          "type": "string",
+          "description": "Password of the user to register."
+        }
+      }
+    },
+    "v1RegisterResponse": {
+      "type": "object"
     }
   }
 }
