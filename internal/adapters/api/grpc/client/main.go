@@ -1,11 +1,12 @@
 package client
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	"time"
 
 	pb "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/gen/proto"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -19,13 +20,31 @@ type grpcClient struct {
 	requestTimeout time.Duration
 }
 
+type GrpcClient interface {
+	UserAuthentication
+	ItemManager
+}
+
+type UserAuthentication interface {
+	LoginUser(ctx context.Context, login, password string) error
+	RegisterUser(ctx context.Context, login, password string) error
+}
+
+type ItemManager interface {
+	GetItem(ctx context.Context, itemID int64) (*Item, error)
+	ListItem(ctx context.Context) ([]ListItem, error)
+	CreateItem(ctx context.Context, name, dataType string, data []byte) error
+	UpdateItemData(ctx context.Context, itemID int64, data []byte) error
+}
+
 // New – функция инициализации gRPC клиента.
 func New(serverAddress string, requestTimeout time.Duration) (*grpcClient, error) {
-	client := &Client{
-		config:  c,
-		timeout: time.Duration(c.ConnectionTimeout) * time.Second,
-	}
+	log.Printf("New grpc client, serverAddress:%v, requestTimeout:%v", serverAddress, requestTimeout.Seconds())
 
+	client := &grpcClient{
+		serverAddress:  serverAddress,
+		requestTimeout: requestTimeout,
+	}
 	conn, err := grpc.Dial(
 		serverAddress,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -35,22 +54,22 @@ func New(serverAddress string, requestTimeout time.Duration) (*grpcClient, error
 		return nil, fmt.Errorf("grpc connection refused: %w", err)
 	}
 
-	return &Client{
-		usersClient: pb.NewUsersServiceClient(conn),
-		itemsClient: pb.NewItemsServiceClient(conn),
-		serverAddress:  serverAddress,
-		requestTimeout: requestTimeout,
-	}, nil
+	client.usersClient = pb.NewUsersServiceClient(conn)
+	client.itemsClient = pb.NewItemsServiceClient(conn)
+
+	return client, nil
 }
 
 // SetAuthToken – метод выставления AuthToken пользователя.
 func (c *grpcClient) SetAuthToken(v string) {
+	log.Printf("SetAuthToken, token:%v", v)
 	c.authToken = v
 	return
 }
 
 // GetAuthToken – метод получения AuthToken пользователя.
 func (c *grpcClient) GetAuthToken() string {
+	log.Printf("GetAuthToken")
 	return c.authToken
 }
 
@@ -80,7 +99,7 @@ func (c *grpcClient) LoginUser(ctx context.Context, login, password string) erro
 func (c *grpcClient) RegisterUser(ctx context.Context, login, password string) error {
 	log.Ctx(ctx).Printf("RegisterUser, Login:%s", login)
 
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+	ctx, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
 
 	req := &pb.RegisterRequest{
@@ -97,10 +116,10 @@ func (c *grpcClient) RegisterUser(ctx context.Context, login, password string) e
 }
 
 // GetItem – получение итема пользователя с сервера.
-func (c *grpcClient) GetItem(itemID int64) (Item, error) {
+func (c *grpcClient) GetItem(ctx context.Context, itemID int64) (*Item, error) {
 	log.Ctx(ctx).Printf("GetItem, itemID:%v", itemID)
 
-	ctx, cancel := context.WithTimeout(context.Background(), c.requestTimeout)
+	ctx, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
 
 	req := &pb.GetRequest{
@@ -133,12 +152,12 @@ func (c *grpcClient) ListItem(ctx context.Context) ([]ListItem, error) {
 		return nil, fmt.Errorf("items client list error:%w", err)
 	}
 
-	items := make([]ListItem, 0, len(res.Data))
-	for _, i := range res.Data {
+	items := make([]ListItem, 0, len(resp.Data))
+	for _, i := range resp.Data {
 		item := ListItem{
-			ID:       item.Id,
-			Name:     item.Name,
-			DataType: item.DataType,
+			ID:   i.Id,
+			Name: i.Name,
+			Type: i.Type,
 		}
 		items = append(items, item)
 	}
@@ -150,7 +169,7 @@ func (c *grpcClient) ListItem(ctx context.Context) ([]ListItem, error) {
 func (c *grpcClient) CreateItem(ctx context.Context, name, dataType string, data []byte) error {
 	log.Ctx(ctx).Printf("CreateItem, name:%v, dataType:%v", name, dataType)
 
-	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	ctx, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
 
 	req := &pb.CreateRequest{
@@ -158,9 +177,9 @@ func (c *grpcClient) CreateItem(ctx context.Context, name, dataType string, data
 			Name: name,
 			Type: dataType,
 			Data: data,
-		}
+		},
 	}
-	_, err := c.gRPCClient.CreateItem(ctx, req)
+	_, err := c.itemsClient.Create(ctx, req)
 	if err != nil {
 		return fmt.Errorf("items client create error:%w", err)
 	}
@@ -170,15 +189,17 @@ func (c *grpcClient) CreateItem(ctx context.Context, name, dataType string, data
 }
 
 // UpdateItemData – обновление данных итема на сервер.
-func (c *grpcClient) UpdateItemData(ctx, itemID int64, data []byte) error {
-	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+func (c *grpcClient) UpdateItemData(ctx context.Context, itemID int64, data []byte) error {
+	log.Ctx(ctx).Printf("UpdateItemData, itemID:%v", itemID)
+
+	ctx, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
 
 	req := &pb.UpdateItemDataRequest{
 		Id:   itemID,
 		Data: data,
 	}
-	err := c.itemsClient.UpdateItemData(ctx, req)
+	_, err := c.itemsClient.UpdateItemData(ctx, req)
 	if err != nil {
 		return fmt.Errorf("items client update item data error:%w", err)
 	}
