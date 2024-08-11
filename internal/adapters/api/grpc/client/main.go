@@ -45,13 +45,14 @@ func New(serverAddress string, requestTimeout time.Duration) (*grpcClient, error
 		serverAddress:  serverAddress,
 		requestTimeout: requestTimeout,
 	}
-	conn, err := grpc.Dial(
+
+	conn, err := grpc.NewClient(
 		serverAddress,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithUnaryInterceptor(AddAuthToken(client)),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("grpc connection refused: %w", err)
+		return nil, fmt.Errorf("create grpc client error:%w", err)
 	}
 
 	client.usersClient = pb.NewUsersServiceClient(conn)
@@ -64,7 +65,6 @@ func New(serverAddress string, requestTimeout time.Duration) (*grpcClient, error
 func (c *grpcClient) SetAuthToken(v string) {
 	log.Printf("SetAuthToken, token:%v", v)
 	c.authToken = v
-	return
 }
 
 // GetAuthToken – метод получения AuthToken пользователя.

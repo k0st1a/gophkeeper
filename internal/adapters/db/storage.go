@@ -129,7 +129,7 @@ func (d *db) GetItem(ctx context.Context, userID, itemID int64) (*ports.ItemInfo
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get item", err)
+		return nil, fmt.Errorf("failed to get item:%w", err)
 	}
 
 	log.Ctx(ctx).Printf("GetItem success")
@@ -163,7 +163,7 @@ func (d *db) ListItem(ctx context.Context, userID int64) ([]ports.ItemInfo, erro
 
 	err = rows.Err()
 	if err != nil {
-		return items, fmt.Errorf("error of list item", err)
+		return items, fmt.Errorf("error of list item:%w", err)
 	}
 
 	log.Ctx(ctx).Printf("ListItem success")

@@ -36,7 +36,7 @@ func Authenticate(auth auth.UserAuthentication) grpc.UnaryServerInterceptor {
 
 		userID, err := auth.GetUserID(token)
 		if err != nil {
-			log.Ctx(ctx).Printf("error of get userID:%w", err)
+			log.Ctx(ctx).Err(err).Msg("error of get userID")
 			return nil, status.Errorf(codes.Unauthenticated, "no user id in token")
 		}
 

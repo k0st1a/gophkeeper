@@ -36,6 +36,9 @@ func Run() error {
 	}
 
 	cli, err := cliclient.New(grpc)
+	if err != nil {
+		return fmt.Errorf("make cli client error:%w", err)
+	}
 
 	go func() {
 		err := cli.Run()
