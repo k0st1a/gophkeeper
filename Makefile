@@ -159,7 +159,7 @@ server-run-with-args: build db-up
 		-dsn ${PG_DATABASE_DSN}
 
 .PHONY:client-run-with-args
-client-run-with-args: build db-up
+client-run-with-args:
 	chmod +x ./cmd/client/client && \
 	./cmd/client/client \
 		-log-level debug \
