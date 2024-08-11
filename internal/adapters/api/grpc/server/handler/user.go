@@ -10,30 +10,30 @@ import (
 
 	pb "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/gen/proto"
 	"github.com/k0st1a/gophkeeper/internal/pkg/auth"
-	"github.com/k0st1a/gophkeeper/internal/pkg/user"
+	"github.com/k0st1a/gophkeeper/internal/ports"
 	"github.com/rs/zerolog/log"
 )
 
-type AuthServer struct {
+type UserServer struct {
 	// нужно встраивать тип auth.Unimplemented<TypeName>
 	// для совместимости с будущими версиями
-	pb.UnimplementedAuthServiceServer
-	User user.Managment
-	Auth auth.UserAuthentication
+	pb.UnimplementedUsersServiceServer
+	Storage ports.UserStorage
+	Auth    auth.UserAuthentication
 }
 
-func (a *AuthServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
-	log.Ctx(ctx).Printf("Register, Email:%s", req.Email)
+func (s *UserServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+	log.Ctx(ctx).Printf("Register, Login:%s", req.Login)
 
-	passwordHash, err := a.Auth.GeneratePasswordHash(req.Password)
+	passwordHash, err := s.Auth.GeneratePasswordHash(req.Password)
 	if err != nil {
 		log.Error().Err(err).Ctx(ctx).Msg("error of generate password pash")
 		return nil, status.Errorf(codes.Internal, "create user error")
 	}
 
-	id, err := a.User.Create(ctx, req.Email, passwordHash)
+	id, err := s.Storage.CreateUser(ctx, req.Login, passwordHash)
 	if err != nil {
-		if errors.Is(err, user.ErrEmailAlreadyBusy) {
+		if errors.Is(err, ports.ErrLoginAlreadyBusy) {
 			return nil, status.Errorf(codes.AlreadyExists, "user already exists")
 		}
 
@@ -41,20 +41,18 @@ func (a *AuthServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "create user error")
 	}
 
-	resp := pb.RegisterResponse{
-		UserId: id,
-	}
+	resp := pb.RegisterResponse{}
 
-	log.Ctx(ctx).Printf("Success register, Email:%s, UserId:%d", req.Email, id)
+	log.Ctx(ctx).Printf("Success register, Login:%s, UserId:%d", req.Login, id)
 	return &resp, nil
 }
 
-func (a *AuthServer) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
-	log.Ctx(ctx).Printf("Login, Email:%s", req.Email)
+func (s *UserServer) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+	log.Ctx(ctx).Printf("Login, Login:%s", req.Login)
 
-	userID, password, err := a.User.GetIDAndPassword(ctx, req.Email)
+	userID, password, err := s.Storage.GetUserIDAndPassword(ctx, req.Login)
 	if err != nil {
-		if errors.Is(err, user.ErrNotFound) {
+		if errors.Is(err, ports.ErrUserNotFound) {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid credentials")
 		}
 
@@ -62,12 +60,12 @@ func (a *AuthServer) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Login
 		return nil, status.Errorf(codes.Internal, "login user error")
 	}
 
-	err = a.Auth.CheckPasswordHash(req.Password, password)
+	err = s.Auth.CheckPasswordHash(req.Password, password)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid credentials")
 	}
 
-	t, err := a.Auth.GenerateToken(userID)
+	t, err := s.Auth.GenerateToken(userID)
 	if err != nil {
 		log.Error().Err(err).Ctx(ctx).Msg("error of generate token")
 		return nil, status.Errorf(codes.Internal, "login user error")
@@ -77,6 +75,6 @@ func (a *AuthServer) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Login
 		Token: t,
 	}
 
-	log.Ctx(ctx).Printf("Success login, Email:%s, UserId:%d", req.Email, userID)
+	log.Ctx(ctx).Printf("Success login, Login:%s, UserId:%d", req.Login, userID)
 	return &resp, nil
 }
