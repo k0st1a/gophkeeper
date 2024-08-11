@@ -1,9 +1,9 @@
 BEGIN TRANSACTION;
 
 CREATE TABLE IF NOT EXISTS users (
-    id bigserial PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
+    id         BIGSERIAL PRIMARY KEY,
+    login      TEXT UNIQUE NOT NULL,
+    password   TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
