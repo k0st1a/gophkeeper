@@ -1,14 +1,11 @@
 syntax = "proto3";
 
-// option go_package = "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/protobuf/auth";
-
-// Указывает пространство имен для сервиса и сообщений. Помогает избегать конфликтов имен.
-package auth;
+package users.v1;
 
 import "google/api/annotations.proto";
 
-// Auth is service for managing permissions and roles.
-service AuthService {
+// UsersService is service for users managments.
+service UsersService {
   // Register registers a new user.
   rpc Register (RegisterRequest) returns (RegisterResponse) {
     option (google.api.http) = {
@@ -26,16 +23,15 @@ service AuthService {
 }
 
 message RegisterRequest {
-  string email = 1; // Email of the user to register.
+  string login = 1; // Login of the user to register.
   string password = 2; // Password of the user to register.
 }
 
 message RegisterResponse {
-  int64 user_id = 1; // User ID of the registered user.
 }
 
 message LoginRequest {
-  string email = 1; // Email of the user to login.
+  string login = 1; // Login of the user to login.
   string password = 2; // Password of the user to login.
 }
 
