@@ -116,6 +116,7 @@ GOLANG_LDFLAGS := -ldflags "-X 'main.buildVersion=${BUILD_VERSION}' \
 .PHONY:build
 build:
 	go build -C ./cmd/server/ -o server -buildvcs=false ${GOLANG_LDFLAGS}
+	go build -C ./cmd/client/ -o client -buildvcs=false ${GOLANG_LDFLAGS}
 
 .PHONY:godoc
 godoc:
@@ -148,15 +149,21 @@ cover-clean:
 	rm -v -f ./cover/cover.profile ./cover/cover.html && \
 	rm -v -r ./cover
 
-.PHONY:gophkeeper-run-with-args
-gophkeeper-run-with-args: build db-up
+.PHONY:server-run-with-args
+server-run-with-args: build db-up
 	chmod +x ./cmd/server/server && \
-		./cmd/server/server \
-			-log-level debug \
-			-address ${GK_HOST}:${GK_PORT} \
-			-http-address ${GK_HOST}:${GK_HTTP_PORT} \
-			-dsn ${PG_DATABASE_DSN}
+	./cmd/server/server \
+		-log-level debug \
+		-address ${GK_HOST}:${GK_PORT} \
+		-http-address ${GK_HOST}:${GK_HTTP_PORT} \
+		-dsn ${PG_DATABASE_DSN}
 
+.PHONY:client-run-with-args
+client-run-with-args: build db-up
+	chmod +x ./cmd/client/client && \
+	./cmd/client/client \
+		-log-level debug \
+		-address ${GK_HOST}:${GK_PORT}
 ##--------------------------------------------------------------------
 ## DB POSTGRESQL
 ##--------------------------------------------------------------------
