@@ -22,11 +22,14 @@ func New(gc grpc.GrpcClient) *client {
 	// Welcome Page
 	welcomeList := tview.NewList().
 		ShowSecondaryText(false).
-		AddItem("Register", "", 0, func() {
+		AddItem("Register", "", '1', func() {
 			pages.SwitchToPage("register")
 		}).
-		AddItem("Login", "", 0, func() {
+		AddItem("Login", "", '2', func() {
 			pages.SwitchToPage("login")
+		}).
+		AddItem("Quit", "", 'q', func() {
+			app.Stop()
 		})
 
 	welcomeList.
@@ -64,13 +67,24 @@ func New(gc grpc.GrpcClient) *client {
 	pages.AddPage("register", registerFlexBox, true, false)
 
 	// Login Page
+	//loginUnsuccessModal := tview.NewModal().
+	//	SetText("Unsuccess login: not implemeted. You will be returned on Welcome Page").
+	//	AddButtons([]string{"Ok"})
+
+	loginSuccessModal := tview.NewModal().
+		SetText("Success login").
+		AddButtons([]string{"Ok"})
+
 	loginForm := tview.NewForm().
 		AddInputField("Email", "", 30, nil, nil).
 		AddPasswordField("Password", "", 20, '*', nil).
 		AddButton("Login", func() {
+			//app.SetFocus(loginUnsuccessModal)
 			pages.SwitchToPage("welcome")
 		}).
-		AddButton("Cancel", func() {
+		AddButton("Back", func() {
+			app.SetFocus(loginSuccessModal)
+			app.SetFocus(pages)
 			pages.SwitchToPage("welcome")
 		})
 
