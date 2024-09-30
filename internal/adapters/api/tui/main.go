@@ -9,6 +9,18 @@ import (
 	"github.com/rivo/tview"
 )
 
+const (
+	pageNameWelcome  = "welcome"
+	pageNameRegister = "register"
+	pageNameLogin    = "login"
+	pageNameItems    = "items"
+
+	formPassword = "password"
+	formCard     = "card"
+	formNote     = "note"
+	formFile     = "file"
+)
+
 type client struct {
 	grpc  grpc.GrpcClient
 	app   *tview.Application
@@ -19,17 +31,41 @@ func New(gc grpc.GrpcClient) *client {
 	app := tview.NewApplication()
 	pages := tview.NewPages()
 
-	// Welcome Page
+	app.SetRoot(pages, true).EnableMouse(true)
+
+	return &client{
+		app:   app,
+		pages: pages,
+	}
+}
+
+func (c *client) Run() error {
+	c.WelcomePage()
+	err := c.app.Run()
+	if err != nil {
+		return fmt.Errorf("error of run tui client:%w", err)
+	}
+
+	return nil
+}
+
+func (c *client) Shutdown() error {
+	return nil
+}
+
+func (c *client) WelcomePage() {
 	welcomeList := tview.NewList().
 		ShowSecondaryText(false).
 		AddItem("Register", "", '1', func() {
-			pages.SwitchToPage("register")
+			c.pages.RemovePage(pageNameWelcome)
+			c.RegisterPage()
 		}).
 		AddItem("Login", "", '2', func() {
-			pages.SwitchToPage("login")
+			c.pages.RemovePage(pageNameWelcome)
+			c.LoginPage()
 		}).
 		AddItem("Quit", "", 'q', func() {
-			app.Stop()
+			c.app.Stop()
 		})
 
 	welcomeList.
@@ -41,18 +77,21 @@ func New(gc grpc.GrpcClient) *client {
 		SetDirection(tview.FlexRow).
 		AddItem(welcomeList, 0, 1, true)
 
-	pages.AddPage("welcome", welcomeFlexBox, true, true)
+	c.pages.AddPage(pageNameWelcome, welcomeFlexBox, true, true)
+}
 
-	// Register Page
+func (c *client) RegisterPage() {
 	registerForm := tview.NewForm().
 		AddInputField("Email", "", 30, nil, nil).
 		AddPasswordField("Password", "", 20, '*', nil).
 		AddPasswordField("Confirm password", "", 20, '*', nil).
 		AddButton("Register", func() {
-			pages.SwitchToPage("welcome")
+			c.pages.RemovePage(pageNameRegister)
+			c.WelcomePage()
 		}).
 		AddButton("Cancel", func() {
-			pages.SwitchToPage("welcome")
+			c.pages.RemovePage(pageNameRegister)
+			c.WelcomePage()
 		})
 
 	registerForm.
@@ -64,7 +103,10 @@ func New(gc grpc.GrpcClient) *client {
 		SetDirection(tview.FlexRow).
 		AddItem(registerForm, 0, 1, true)
 
-	pages.AddPage("register", registerFlexBox, true, false)
+	c.pages.AddPage(pageNameRegister, registerFlexBox, true, true)
+}
+
+func (c *client) LoginPage() {
 
 	// Login Page
 	//loginUnsuccessModal := tview.NewModal().
@@ -80,12 +122,14 @@ func New(gc grpc.GrpcClient) *client {
 		AddPasswordField("Password", "", 20, '*', nil).
 		AddButton("Login", func() {
 			//app.SetFocus(loginUnsuccessModal)
-			pages.SwitchToPage("welcome")
+			c.pages.RemovePage(pageNameLogin)
+			c.WelcomePage()
 		}).
 		AddButton("Back", func() {
-			app.SetFocus(loginSuccessModal)
-			app.SetFocus(pages)
-			pages.SwitchToPage("welcome")
+			c.app.SetFocus(loginSuccessModal)
+			c.app.SetFocus(c.pages)
+			c.pages.RemovePage(pageNameLogin)
+			c.WelcomePage()
 		})
 
 	loginForm.
@@ -97,35 +141,5 @@ func New(gc grpc.GrpcClient) *client {
 		SetDirection(tview.FlexRow).
 		AddItem(loginForm, 0, 1, true)
 
-	pages.AddPage("login", loginFlexBox, true, false)
-
-	// Items Page
-
-	// Password Form
-
-	// Card Form
-
-	// Note Form
-
-	// File Form
-
-	app.SetRoot(pages, true).EnableMouse(true)
-
-	return &client{
-		app:   app,
-		pages: pages,
-	}
-}
-
-func (c *client) Run() error {
-	err := c.app.Run()
-	if err != nil {
-		return fmt.Errorf("error of run tui client:%w", err)
-	}
-
-	return nil
-}
-
-func (c *client) Shutdown() error {
-	return nil
+	c.pages.AddPage(pageNameLogin, loginFlexBox, true, true)
 }
