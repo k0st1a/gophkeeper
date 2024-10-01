@@ -1,12 +1,15 @@
 package tui
 
 import (
+	//"context"
 	"fmt"
+	"time"
 
 	grpc "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/client"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -56,13 +59,13 @@ func (c *client) Shutdown() error {
 func (c *client) WelcomePage() {
 	welcomeList := tview.NewList().
 		ShowSecondaryText(false).
-		AddItem("Register", "", '1', func() {
-			c.pages.RemovePage(pageNameWelcome)
-			c.RegisterPage()
-		}).
-		AddItem("Login", "", '2', func() {
+		AddItem("Login", "", '1', func() {
 			c.pages.RemovePage(pageNameWelcome)
 			c.LoginPage()
+		}).
+		AddItem("Register", "", '2', func() {
+			c.pages.RemovePage(pageNameWelcome)
+			c.RegisterPage()
 		}).
 		AddItem("Quit", "", 'q', func() {
 			c.app.Stop()
@@ -81,11 +84,47 @@ func (c *client) WelcomePage() {
 }
 
 func (c *client) RegisterPage() {
-	registerForm := tview.NewForm().
+	var (
+		password          string
+		confirmedPassword string
+	)
+	registerForm := tview.NewForm()
+
+	registerForm.
 		AddInputField("Email", "", 30, nil, nil).
-		AddPasswordField("Password", "", 20, '*', nil).
-		AddPasswordField("Confirm password", "", 20, '*', nil).
+		AddPasswordField("Password", "", 20, '*', func(text string) {
+			password = text
+		}).
+		AddPasswordField("Confirm password", "", 20, '*', func(text string) {
+			confirmedPassword = text
+		}).
 		AddButton("Register", func() {
+			fmt.Errorf("password:%v, confirmedPassword:%v", password, confirmedPassword)
+			log.Printf("password:%v, confirmedPassword:%v", password, confirmedPassword)
+
+			if registerForm.GetFormItemByLabel("Password") != registerForm.GetFormItemByLabel("Confirm password") {
+				modalError := tview.NewModal().
+					SetText("The passwords do not match").
+					AddButtons([]string{"Cancel1"}).
+					SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+						if buttonLabel == "Cancel1" {
+							c.pages.RemovePage("error")
+							c.app.SetFocus(registerForm)
+						}
+					})
+				c.pages.AddPage("error", modalError, false, true)
+				c.app.SetFocus(modalError)
+			}
+
+			fmt.Errorf("password:%v, confirmedPassword:%v", password, confirmedPassword)
+			log.Printf("password:%v, confirmedPassword:%v", password, confirmedPassword)
+			time.Sleep(400 * time.Millisecond)
+
+			//err := c.grpc.RegisterUser(context.Background(), email, password)
+			//if err != nil {
+			//	log.Printf("err:%v", err)
+			//}
+
 			c.pages.RemovePage(pageNameRegister)
 			c.WelcomePage()
 		}).
