@@ -26,7 +26,12 @@ func Run() error {
 	ctx, cancelFunc := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	defer cancelFunc()
 
-	err = logwrap.New(cfg.LogLevel)
+	if cfg.LogFile != "" {
+		err = logwrap.NewFile(cfg.LogLevel, cfg.LogFile)
+	} else {
+		err = logwrap.New(cfg.LogLevel)
+	}
+
 	if err != nil {
 		return fmt.Errorf("logwrap create error:%w", err)
 	}

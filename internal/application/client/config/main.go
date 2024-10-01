@@ -15,6 +15,9 @@ type Config struct {
 	// LogLevel - уровень логирования. Возможные значения: debug, info, warn, error (по умолчанию info).
 	// Задается через флаг `-log-level=<ЗНАЧЕНИЕ>` или переменную окружения `LOG_LEVEL=<ЗНАЧЕНИЕ>`.
 	LogLevel string
+	// LogFile - имя файл, куда будут писаться логи. По умолчанию не задан, в это случае логи пишутся в stdout.
+	// Задается через флаг `-log-file=<ЗНАЧЕНИЕ>` или переменную окружения `LOG_FILE=<ЗНАЧЕНИЕ>`.
+	LogFile string
 	// SecretKey - ключ с помощью которого шифруются/проверяются пароли пользователя при регистрации и логине.
 	// Задается через флаг `-secret-key=<ЗНАЧЕНИЕ>` или переменную окружения `SECRET_KEY=<ЗНАЧЕНИЕ>`.
 	SecretKey string
@@ -52,6 +55,11 @@ func (c *Config) applyFromEnvAndArgs() error {
 		c.LogLevel = ll
 	}
 
+	lf, ok := os.LookupEnv("LOG_FILE")
+	if ok {
+		c.LogFile = lf
+	}
+
 	sk, ok := os.LookupEnv("SECRET_KEY")
 	if ok {
 		c.SecretKey = sk
@@ -61,6 +69,9 @@ func (c *Config) applyFromEnvAndArgs() error {
 	flag.StringVar(&c.LogLevel, "log-level", c.LogLevel,
 		"Уровень логирования. Задается через флаг `-log-level=<ЗНАЧЕНИЕ>` или переменную окружения "+
 			"`LOG_LEVEL=<ЗНАЧЕНИЕ>.\nВозможные значения: debug, info, warn, error.")
+	flag.StringVar(&c.LogFile, "log-file", c.LogFile,
+		"Файл логирования. Задается через флаг `-log-file=<ЗНАЧЕНИЕ>` или переменную окружения "+
+			"`LOG_FILE=<ЗНАЧЕНИЕ>.\nПо умолчанию не задан, в этом случае логи пишутся в stdout.")
 	flag.StringVar(&c.SecretKey, "secret-key", c.SecretKey,
 		"Ключ, с помощью которого шифруются/проверяются пароли пользователя при регистрации и логине."+
 			"Задается через флаг `-secret-key=<ЗНАЧЕНИЕ>` или переменную окружения `SECRET_KEY=<ЗНАЧЕНИЕ>`")

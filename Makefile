@@ -163,6 +163,7 @@ client-run-with-args:
 	chmod +x ./cmd/client/client && \
 	./cmd/client/client \
 		-log-level debug \
+		-log-file client.log \
 		-address ${GK_HOST}:${GK_PORT}
 ##--------------------------------------------------------------------
 ## DB POSTGRESQL
