@@ -3,7 +3,6 @@ package tui
 import (
 	//"context"
 	"fmt"
-	"time"
 
 	grpc "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/client"
 
@@ -17,6 +16,9 @@ const (
 	pageNameRegister = "register"
 	pageNameLogin    = "login"
 	pageNameItems    = "items"
+	pageNameError    = "error"
+
+	buttonNameCancel = "Cancel"
 
 	formPassword = "password"
 	formCard     = "card"
@@ -83,14 +85,31 @@ func (c *client) WelcomePage() {
 	c.pages.AddPage(pageNameWelcome, welcomeFlexBox, true, true)
 }
 
+func (c *client) pageError(text string) {
+	modal := tview.NewModal().
+		SetText(text).
+		AddButtons([]string{buttonNameCancel}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			log.Printf("Button with buttonLabel:%v pressed", buttonLabel)
+			if buttonLabel == buttonNameCancel {
+				log.Printf("Button Cancel pressed")
+				c.pages.RemovePage(pageNameError)
+				c.app.SetRoot(c.pages, true)
+			}
+		})
+
+	log.Printf("Button Cancel pressed")
+	c.pages.AddPage(pageNameError, modal, true, true)
+	c.app.SetRoot(modal, false)
+	log.Printf("Button Cancel pressed")
+}
+
 func (c *client) RegisterPage() {
 	var (
 		password          string
 		confirmedPassword string
 	)
-	registerForm := tview.NewForm()
-
-	registerForm.
+	registerForm := tview.NewForm().
 		AddInputField("Email", "", 30, nil, nil).
 		AddPasswordField("Password", "", 20, '*', func(text string) {
 			password = text
@@ -99,38 +118,28 @@ func (c *client) RegisterPage() {
 			confirmedPassword = text
 		}).
 		AddButton("Register", func() {
-			fmt.Errorf("password:%v, confirmedPassword:%v", password, confirmedPassword)
-			log.Printf("password:%v, confirmedPassword:%v", password, confirmedPassword)
-
-			if registerForm.GetFormItemByLabel("Password") != registerForm.GetFormItemByLabel("Confirm password") {
-				modalError := tview.NewModal().
-					SetText("The passwords do not match").
-					AddButtons([]string{"Cancel1"}).
-					SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-						if buttonLabel == "Cancel1" {
-							c.pages.RemovePage("error")
-							c.app.SetFocus(registerForm)
-						}
-					})
-				c.pages.AddPage("error", modalError, false, true)
-				c.app.SetFocus(modalError)
+			log.Printf("password:%v != confirmedPassword:%v", password, confirmedPassword)
+			if password != confirmedPassword {
+				log.Printf("password:%v, confirmedPassword:%v", password, confirmedPassword)
+				c.pageError("The passwords do not match")
+				log.Printf("password:%v, confirmedPassword:%v", password, confirmedPassword)
 			}
 
-			fmt.Errorf("password:%v, confirmedPassword:%v", password, confirmedPassword)
 			log.Printf("password:%v, confirmedPassword:%v", password, confirmedPassword)
-			time.Sleep(400 * time.Millisecond)
 
 			//err := c.grpc.RegisterUser(context.Background(), email, password)
 			//if err != nil {
 			//	log.Printf("err:%v", err)
 			//}
 
-			c.pages.RemovePage(pageNameRegister)
-			c.WelcomePage()
+			//c.pages.RemovePage(pageNameRegister)
+			//c.WelcomePage()
 		}).
 		AddButton("Cancel", func() {
+			log.Printf("password:%v, confirmedPassword:%v", password, confirmedPassword)
 			c.pages.RemovePage(pageNameRegister)
 			c.WelcomePage()
+			log.Printf("password:%v, confirmedPassword:%v", password, confirmedPassword)
 		})
 
 	registerForm.
@@ -160,7 +169,7 @@ func (c *client) LoginPage() {
 		AddInputField("Email", "", 30, nil, nil).
 		AddPasswordField("Password", "", 20, '*', nil).
 		AddButton("Login", func() {
-			//app.SetFocus(loginUnsuccessModal)
+			//c.app.SetFocus(loginUnsuccessModal)
 			c.pages.RemovePage(pageNameLogin)
 			c.WelcomePage()
 		}).
