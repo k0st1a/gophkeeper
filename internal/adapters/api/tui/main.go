@@ -113,13 +113,10 @@ func (c *client) NotifyPage(text string) {
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			if buttonLabel == buttonNameOk {
 				c.pages.RemovePage(pageNameNotify)
-				c.app.SetRoot(c.pages, true)
 			}
 		})
 
 	c.pages.AddPage(pageNameNotify, modal, true, true)
-
-	c.app.SetRoot(modal, false).SetFocus(modal)
 }
 
 func (c *client) RegisterPage() {
@@ -221,11 +218,11 @@ func (c *client) LoginPage() {
 				return
 			}
 
-			c.NotifyPage("Success login")
-			log.Printf("Success login fast")
-
 			c.pages.RemovePage(pageNameLogin)
 			c.ItemsPage()
+
+			c.NotifyPage("Success login")
+			log.Printf("Success login fast")
 		}).
 		AddButton("Cancel", func() {
 			c.pages.RemovePage(pageNameLogin)
