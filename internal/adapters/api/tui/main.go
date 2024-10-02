@@ -119,8 +119,7 @@ func (c *client) NotifyPage(text string) {
 
 	c.pages.AddPage(pageNameNotify, modal, true, true)
 
-	c.app.SetRoot(modal, false)
-	modal.SetFocus(0)
+	c.app.SetRoot(modal, false).SetFocus(modal)
 }
 
 func (c *client) RegisterPage() {
@@ -168,11 +167,11 @@ func (c *client) RegisterPage() {
 				return
 			}
 
-			c.NotifyPage("Success register")
-			log.Printf("Success register fast")
-
 			c.pages.RemovePage(pageNameRegister)
 			c.WelcomePage()
+
+			c.NotifyPage("Success register")
+			log.Printf("Success register fast")
 		}).
 		AddButton("Cancel", func() {
 			c.pages.RemovePage(pageNameRegister)
