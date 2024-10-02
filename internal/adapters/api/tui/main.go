@@ -105,20 +105,6 @@ func (c *client) ErrorPage(text string) {
 	c.pages.AddPage(pageNameError, modal, true, true)
 }
 
-func (c *client) NotifyPage(text string) {
-	log.Printf("Invoked Notify Page, text:%v", text)
-	modal := tview.NewModal().
-		SetText(text).
-		AddButtons([]string{buttonNameOk}).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-			if buttonLabel == buttonNameOk {
-				c.pages.RemovePage(pageNameNotify)
-			}
-		})
-
-	c.pages.AddPage(pageNameNotify, modal, true, true)
-}
-
 func (c *client) NotifyAndSwitch2Page(text string, page func()) {
 	log.Printf("Invoked Notify Page, text:%v", text)
 	modal := tview.NewModal().
