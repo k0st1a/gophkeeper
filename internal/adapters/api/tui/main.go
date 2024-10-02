@@ -16,9 +16,12 @@ const (
 	pageNameRegister = "register"
 	pageNameLogin    = "login"
 	pageNameItems    = "items"
-	pageNameError    = "error"
+
+	pageNameError  = "error"
+	pageNameNotify = "notify"
 
 	buttonNameCancel = "Cancel"
+	buttonNameOk     = "Ok"
 
 	formPassword = "password"
 	formCard     = "card"
@@ -102,6 +105,24 @@ func (c *client) ErrorPage(text string) {
 	c.pages.AddPage(pageNameError, modal, true, true)
 }
 
+func (c *client) NotifyPage(text string) {
+	log.Printf("Invoked Notify Page, text:%v", text)
+	modal := tview.NewModal().
+		SetText(text).
+		AddButtons([]string{buttonNameOk}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			if buttonLabel == buttonNameOk {
+				c.pages.RemovePage(pageNameNotify)
+				c.app.SetRoot(c.pages, true)
+			}
+		})
+
+	c.pages.AddPage(pageNameNotify, modal, true, true)
+
+	c.app.SetRoot(modal, false)
+	modal.SetFocus(0)
+}
+
 func (c *client) RegisterPage() {
 	log.Printf("Invoked Register Page")
 
@@ -110,8 +131,7 @@ func (c *client) RegisterPage() {
 		password        string
 		confirmPassword string
 	)
-	registerForm := tview.NewForm()
-	registerForm.
+	registerForm := tview.NewForm().
 		AddInputField("Email", "", 30, nil, func(text string) {
 			email = text
 		}).
@@ -144,8 +164,12 @@ func (c *client) RegisterPage() {
 
 			err := c.grpc.RegisterUser(context.Background(), email, password)
 			if err != nil {
-				log.Printf("err:%v", err)
+				c.ErrorPage(err.Error())
+				return
 			}
+
+			c.NotifyPage("Success register")
+			log.Printf("Success register fast")
 
 			c.pages.RemovePage(pageNameRegister)
 			c.WelcomePage()
@@ -170,26 +194,41 @@ func (c *client) RegisterPage() {
 func (c *client) LoginPage() {
 	log.Printf("Invoked Login Page")
 
-	// Login Page
-	//loginUnsuccessModal := tview.NewModal().
-	//	SetText("Unsuccess login: not implemeted. You will be returned on Welcome Page").
-	//	AddButtons([]string{"Ok"})
-
-	loginSuccessModal := tview.NewModal().
-		SetText("Success login").
-		AddButtons([]string{"Ok"})
-
+	var (
+		email    string
+		password string
+	)
 	loginForm := tview.NewForm().
-		AddInputField("Email", "", 30, nil, nil).
-		AddPasswordField("Password", "", 20, '*', nil).
-		AddButton("Login", func() {
-			//c.app.SetFocus(loginUnsuccessModal)
-			c.pages.RemovePage(pageNameLogin)
-			c.WelcomePage()
+		AddInputField("Email", "", 30, nil, func(text string) {
+			email = text
 		}).
-		AddButton("Back", func() {
-			c.app.SetFocus(loginSuccessModal)
-			c.app.SetFocus(c.pages)
+		AddPasswordField("Password", "", 20, '*', func(text string) {
+			password = text
+		}).
+		AddButton("Login", func() {
+			if email == "" {
+				c.ErrorPage("Email is empty")
+				return
+			}
+
+			if password == "" {
+				c.ErrorPage("Password is empty")
+				return
+			}
+
+			err := c.grpc.LoginUser(context.Background(), email, password)
+			if err != nil {
+				c.ErrorPage(err.Error())
+				return
+			}
+
+			c.NotifyPage("Success login")
+			log.Printf("Success login fast")
+
+			c.pages.RemovePage(pageNameLogin)
+			c.ItemsPage()
+		}).
+		AddButton("Cancel", func() {
 			c.pages.RemovePage(pageNameLogin)
 			c.WelcomePage()
 		})
@@ -204,4 +243,28 @@ func (c *client) LoginPage() {
 		AddItem(loginForm, 0, 1, true)
 
 	c.pages.AddPage(pageNameLogin, loginFlexBox, true, true)
+}
+
+func (c *client) ItemsPage() {
+	log.Printf("Invoked Items Page")
+
+	itemsForm := tview.NewForm()
+	itemsForm.
+		AddInputField("Email", "", 30, nil, nil).
+		AddPasswordField("Password", "", 20, '*', nil).
+		AddButton("Cancel", func() {
+			c.pages.RemovePage(pageNameItems)
+			c.WelcomePage()
+		})
+
+	itemsForm.
+		SetTitle("Items").
+		SetBorder(true).
+		SetBorderColor(tcell.ColorSteelBlue)
+
+	itemsFlexBox := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(itemsForm, 0, 1, true)
+
+	c.pages.AddPage(pageNameItems, itemsFlexBox, true, true)
 }
