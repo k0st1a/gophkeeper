@@ -1,7 +1,7 @@
 package tui
 
 import (
-	//"context"
+	"context"
 	"fmt"
 
 	grpc "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/client"
@@ -105,33 +105,49 @@ func (c *client) RegisterPage() {
 	log.Printf("Invoked Register Page")
 
 	var (
-		password          string
-		confirmedPassword string
+		email           string
+		password        string
+		confirmPassword string
 	)
-	registerForm := tview.NewForm().
-		AddInputField("Email", "", 30, nil, nil).
+	registerForm := tview.NewForm()
+	registerForm.
+		AddInputField("Email", "", 30, nil, func(text string) {
+			email = text
+		}).
 		AddPasswordField("Password", "", 20, '*', func(text string) {
 			password = text
 		}).
 		AddPasswordField("Confirm password", "", 20, '*', func(text string) {
-			confirmedPassword = text
+			confirmPassword = text
 		}).
 		AddButton("Register", func() {
+			if email == "" {
+				c.ErrorPage("Email is empty")
+				return
+			}
+
 			if password == "" {
 				c.ErrorPage("Password is empty")
+				return
 			}
 
-			if password != confirmedPassword {
+			if confirmPassword == "" {
+				c.ErrorPage("Confirm password is empty")
+				return
+			}
+
+			if password != confirmPassword {
 				c.ErrorPage("Passwords not equals")
+				return
 			}
 
-			//err := c.grpc.RegisterUser(context.Background(), email, password)
-			//if err != nil {
-			//	log.Printf("err:%v", err)
-			//}
+			err := c.grpc.RegisterUser(context.Background(), email, password)
+			if err != nil {
+				log.Printf("err:%v", err)
+			}
 
-			//c.pages.RemovePage(pageNameRegister)
-			//c.WelcomePage()
+			c.pages.RemovePage(pageNameRegister)
+			c.WelcomePage()
 		}).
 		AddButton("Cancel", func() {
 			c.pages.RemovePage(pageNameRegister)
