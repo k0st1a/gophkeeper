@@ -39,6 +39,7 @@ func New(gc grpc.GrpcClient) *client {
 	app.SetRoot(pages, true).EnableMouse(true)
 
 	return &client{
+		grpc:  gc,
 		app:   app,
 		pages: pages,
 	}
