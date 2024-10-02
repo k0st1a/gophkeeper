@@ -59,6 +59,8 @@ func (c *client) Shutdown() error {
 }
 
 func (c *client) WelcomePage() {
+	log.Printf("Invoked Welcome Page")
+
 	welcomeList := tview.NewList().
 		ShowSecondaryText(false).
 		AddItem("Login", "", '1', func() {
@@ -85,26 +87,23 @@ func (c *client) WelcomePage() {
 	c.pages.AddPage(pageNameWelcome, welcomeFlexBox, true, true)
 }
 
-func (c *client) pageError(text string) {
+func (c *client) ErrorPage(text string) {
+	log.Printf("Invoked Error Page, text:%v", text)
 	modal := tview.NewModal().
 		SetText(text).
 		AddButtons([]string{buttonNameCancel}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-			log.Printf("Button with buttonLabel:%v pressed", buttonLabel)
 			if buttonLabel == buttonNameCancel {
-				log.Printf("Button Cancel pressed")
 				c.pages.RemovePage(pageNameError)
-				//c.app.SetRoot(c.pages, true)
 			}
 		})
 
-	log.Printf("Button Cancel pressed")
 	c.pages.AddPage(pageNameError, modal, true, true)
-	//c.app.SetRoot(modal, false)
-	log.Printf("Button Cancel pressed")
 }
 
 func (c *client) RegisterPage() {
+	log.Printf("Invoked Register Page")
+
 	var (
 		password          string
 		confirmedPassword string
@@ -118,14 +117,13 @@ func (c *client) RegisterPage() {
 			confirmedPassword = text
 		}).
 		AddButton("Register", func() {
-			log.Printf("password:%v != confirmedPassword:%v", password, confirmedPassword)
-			if password != confirmedPassword {
-				log.Printf("password:%v, confirmedPassword:%v", password, confirmedPassword)
-				c.pageError("The passwords do not match")
-				log.Printf("password:%v, confirmedPassword:%v", password, confirmedPassword)
+			if password == "" {
+				c.ErrorPage("Password is empty")
 			}
 
-			log.Printf("password:%v, confirmedPassword:%v", password, confirmedPassword)
+			if password != confirmedPassword {
+				c.ErrorPage("Passwords not equals")
+			}
 
 			//err := c.grpc.RegisterUser(context.Background(), email, password)
 			//if err != nil {
@@ -136,10 +134,8 @@ func (c *client) RegisterPage() {
 			//c.WelcomePage()
 		}).
 		AddButton("Cancel", func() {
-			log.Printf("password:%v, confirmedPassword:%v", password, confirmedPassword)
 			c.pages.RemovePage(pageNameRegister)
 			c.WelcomePage()
-			log.Printf("password:%v, confirmedPassword:%v", password, confirmedPassword)
 		})
 
 	registerForm.
@@ -155,6 +151,7 @@ func (c *client) RegisterPage() {
 }
 
 func (c *client) LoginPage() {
+	log.Printf("Invoked Login Page")
 
 	// Login Page
 	//loginUnsuccessModal := tview.NewModal().
