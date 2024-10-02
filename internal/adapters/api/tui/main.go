@@ -119,6 +119,21 @@ func (c *client) NotifyPage(text string) {
 	c.pages.AddPage(pageNameNotify, modal, true, true)
 }
 
+func (c *client) NotifyAndSwitch2Page(text string, page func()) {
+	log.Printf("Invoked Notify Page, text:%v", text)
+	modal := tview.NewModal().
+		SetText(text).
+		AddButtons([]string{buttonNameOk}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			if buttonLabel == buttonNameOk {
+				c.pages.RemovePage(pageNameNotify)
+				page()
+			}
+		})
+
+	c.pages.AddPage(pageNameNotify, modal, true, true)
+}
+
 func (c *client) RegisterPage() {
 	log.Printf("Invoked Register Page")
 
@@ -165,10 +180,8 @@ func (c *client) RegisterPage() {
 			}
 
 			c.pages.RemovePage(pageNameRegister)
-			c.WelcomePage()
 
-			c.NotifyPage("Success register")
-			log.Printf("Success register fast")
+			c.NotifyAndSwitch2Page("Success register", c.WelcomePage)
 		}).
 		AddButton("Cancel", func() {
 			c.pages.RemovePage(pageNameRegister)
@@ -219,9 +232,10 @@ func (c *client) LoginPage() {
 			}
 
 			c.pages.RemovePage(pageNameLogin)
-			c.ItemsPage()
+			//c.ItemsPage()
+			log.Printf("Success login fast")
 
-			c.NotifyPage("Success login")
+			c.NotifyAndSwitch2Page("Success login", c.ItemsPage)
 			log.Printf("Success login fast")
 		}).
 		AddButton("Cancel", func() {
