@@ -49,6 +49,10 @@ func New(level string) error {
 		return fmt.Errorf("unknown log level %v", level)
 	}
 
+	// for the case when the logger does not exist in the context
+	//nolint // need here
+	zerolog.DefaultContextLogger = &log.Logger
+
 	return nil
 }
 
@@ -95,6 +99,10 @@ func NewFile(level string, path string) error {
 	default:
 		return fmt.Errorf("unknown log level %v", level)
 	}
+
+	// for the case when the logger does not exist in the context
+	//nolint // need here
+	zerolog.DefaultContextLogger = &log.Logger
 
 	return nil
 }
