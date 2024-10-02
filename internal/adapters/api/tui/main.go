@@ -94,13 +94,13 @@ func (c *client) pageError(text string) {
 			if buttonLabel == buttonNameCancel {
 				log.Printf("Button Cancel pressed")
 				c.pages.RemovePage(pageNameError)
-				c.app.SetRoot(c.pages, true)
+				//c.app.SetRoot(c.pages, true)
 			}
 		})
 
 	log.Printf("Button Cancel pressed")
 	c.pages.AddPage(pageNameError, modal, true, true)
-	c.app.SetRoot(modal, false)
+	//c.app.SetRoot(modal, false)
 	log.Printf("Button Cancel pressed")
 }
 
