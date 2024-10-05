@@ -39,7 +39,8 @@ protobuf-install:
 ## TODO: Версии пакетов должны быть одни и теже в рамках Makefile.
 
 GO_PATH := $(shell go env GOPATH)
-PROTOBUF_PATH := "./proto"
+PROTOBUF_PATH := "./proto/v1"
+PROTOBUF_GEN_PATH := "./internal/adapters/api/grpc/gen/proto/v1"
 
 .PHONY:protobuf-generate
 protobuf-generate:
@@ -52,14 +53,14 @@ protobuf-generate:
 		--grpc-gateway_opt=Mitems.proto=. \
 		--grpc-gateway_opt=Musers.proto=. \
 		--grpc-gateway_opt=paths=source_relative \
-		--grpc-gateway_out=./internal/adapters/api/grpc/gen/proto \
+		--grpc-gateway_out=${PROTOBUF_GEN_PATH} \
 		--go_opt=Mitems.proto=. \
 		--go_opt=Musers.proto=. \
 		--go_opt=paths=source_relative \
-		--go_out=./internal/adapters/api/grpc/gen/proto \
+		--go_out=${PROTOBUF_GEN_PATH} \
 		--go-grpc_opt=Mitems.proto=. \
 		--go-grpc_opt=Musers.proto=. \
-		--go-grpc_out=./internal/adapters/api/grpc/gen/proto \
+		--go-grpc_out=${PROTOBUF_GEN_PATH} \
 		--go-grpc_opt=paths=source_relative \
 		items.proto \
 		users.proto
