@@ -6,7 +6,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	pb "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/gen/proto"
+	pb "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/gen/proto/v1"
 	"github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/server/handler"
 	"github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/server/interceptor"
 	"github.com/k0st1a/gophkeeper/internal/application/server/config"

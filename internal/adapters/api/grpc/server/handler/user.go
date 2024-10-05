@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pb "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/gen/proto"
+	pb "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/gen/proto/v1"
 	"github.com/k0st1a/gophkeeper/internal/pkg/auth"
 	"github.com/k0st1a/gophkeeper/internal/ports"
 	"github.com/rs/zerolog/log"

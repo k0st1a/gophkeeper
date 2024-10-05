@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/gen/proto"
+	pb "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/gen/proto/v1"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -122,20 +122,20 @@ func (c *grpcClient) GetItem(ctx context.Context, itemID int64) (*Item, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
 
-	req := &pb.GetRequest{
+	req := &pb.GetItemRequest{
 		Id: itemID,
 	}
-	resp, err := c.itemsClient.Get(ctx, req)
+	resp, err := c.itemsClient.GetItem(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("items client get error:%w", err)
 	}
 
 	log.Ctx(ctx).Printf("GetItem success")
 	return &Item{
-		ID:   resp.Data.Id,
-		Name: resp.Data.Item.Name,
-		Type: resp.Data.Item.Type,
-		Data: resp.Data.Item.Data,
+		ID:   resp.ItemInfo.Id,
+		Name: resp.ItemInfo.Item.Name,
+		Type: resp.ItemInfo.Item.Type,
+		Data: resp.ItemInfo.Item.Data,
 	}, nil
 }
 
@@ -146,18 +146,18 @@ func (c *grpcClient) ListItem(ctx context.Context) ([]ListItem, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
 
-	req := &pb.ListRequest{}
-	resp, err := c.itemsClient.List(ctx, req)
+	req := &pb.ListItemsRequest{}
+	resp, err := c.itemsClient.ListItems(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("items client list error:%w", err)
 	}
 
-	items := make([]ListItem, 0, len(resp.Data))
-	for _, i := range resp.Data {
+	items := make([]ListItem, 0, len(resp.Items))
+	for _, i := range resp.Items {
 		item := ListItem{
 			ID:   i.Id,
-			Name: i.Name,
-			Type: i.Type,
+			Name: i.Item.Name,
+			Type: i.Item.Type,
 		}
 		items = append(items, item)
 	}
@@ -172,14 +172,14 @@ func (c *grpcClient) CreateItem(ctx context.Context, name, dataType string, data
 	ctx, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
 
-	req := &pb.CreateRequest{
+	req := &pb.CreateItemRequest{
 		Item: &pb.Item{
 			Name: name,
 			Type: dataType,
 			Data: data,
 		},
 	}
-	_, err := c.itemsClient.Create(ctx, req)
+	_, err := c.itemsClient.CreateItem(ctx, req)
 	if err != nil {
 		return fmt.Errorf("items client create error:%w", err)
 	}
@@ -195,11 +195,13 @@ func (c *grpcClient) UpdateItemData(ctx context.Context, itemID int64, data []by
 	ctx, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
 
-	req := &pb.UpdateItemDataRequest{
-		Id:   itemID,
-		Data: data,
+	req := &pb.UpdateItemRequest{
+		Id: itemID,
+		Item: &pb.Item{
+			Data: data,
+		},
 	}
-	_, err := c.itemsClient.UpdateItemData(ctx, req)
+	_, err := c.itemsClient.UpdateItem(ctx, req)
 	if err != nil {
 		return fmt.Errorf("items client update item data error:%w", err)
 	}

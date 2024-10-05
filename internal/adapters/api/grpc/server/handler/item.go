@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pb "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/gen/proto"
+	pb "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/gen/proto/v1"
 	"github.com/k0st1a/gophkeeper/internal/pkg/userid"
 	"github.com/k0st1a/gophkeeper/internal/ports"
 	"github.com/rs/zerolog/log"
@@ -20,7 +20,7 @@ type ItemServer struct {
 	Storage ports.ItemStorage // YAGNI - без промежуточного сервиса логики над item.
 }
 
-func (s *ItemServer) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateResponse, error) {
+func (s *ItemServer) CreateItem(ctx context.Context, req *pb.CreateItemRequest) (*pb.CreateItemResponse, error) {
 	log.Ctx(ctx).Printf("Create item, Name:%v, Type:%v", req.Item.Name, req.Item.Type)
 
 	userID, ok := userid.Get(ctx)
@@ -35,7 +35,7 @@ func (s *ItemServer) Create(ctx context.Context, req *pb.CreateRequest) (*pb.Cre
 		return nil, status.Errorf(codes.Internal, "create item error")
 	}
 
-	resp := pb.CreateResponse{
+	resp := pb.CreateItemResponse{
 		Id: id,
 	}
 
@@ -43,7 +43,7 @@ func (s *ItemServer) Create(ctx context.Context, req *pb.CreateRequest) (*pb.Cre
 	return &resp, nil
 }
 
-func (s *ItemServer) UpdateItemData(ctx context.Context, req *pb.UpdateItemDataRequest) (*pb.UpdateItemDataResponse, error) {
+func (s *ItemServer) UpdateItem(ctx context.Context, req *pb.UpdateItemRequest) (*pb.UpdateItemResponse, error) {
 	log.Ctx(ctx).Printf("Update item data, itemID:%v", req.Id)
 
 	userID, ok := userid.Get(ctx)
@@ -52,17 +52,17 @@ func (s *ItemServer) UpdateItemData(ctx context.Context, req *pb.UpdateItemDataR
 		return nil, status.Errorf(codes.Unauthenticated, "no user id")
 	}
 
-	err := s.Storage.UpdateItem(ctx, userID, req.Id, req.Data)
+	err := s.Storage.UpdateItem(ctx, userID, req.Id, req.Item.Data)
 	if err != nil {
 		log.Error().Err(err).Ctx(ctx).Msg("update item error")
 		return nil, status.Errorf(codes.Internal, "update item error")
 	}
 
 	log.Ctx(ctx).Printf("Update item data success")
-	return &pb.UpdateItemDataResponse{}, nil
+	return &pb.UpdateItemResponse{}, nil
 }
 
-func (s *ItemServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+func (s *ItemServer) GetItem(ctx context.Context, req *pb.GetItemRequest) (*pb.GetItemResponse, error) {
 	log.Ctx(ctx).Printf("Get item, itemID:%v", req.Id)
 
 	userID, ok := userid.Get(ctx)
@@ -77,8 +77,8 @@ func (s *ItemServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespon
 		return nil, status.Errorf(codes.Internal, "get item error")
 	}
 
-	resp := pb.GetResponse{
-		Data: &pb.ItemInfo{
+	resp := pb.GetItemResponse{
+		ItemInfo: &pb.ItemInfo{
 			Id: i.ID,
 			Item: &pb.Item{
 				Name: i.Name,
@@ -92,7 +92,7 @@ func (s *ItemServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespon
 	return &resp, nil
 }
 
-func (s *ItemServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
+func (s *ItemServer) ListItems(ctx context.Context, req *pb.ListItemsRequest) (*pb.ListItemsResponse, error) {
 	log.Ctx(ctx).Printf("List item")
 
 	userID, ok := userid.Get(ctx)
@@ -107,18 +107,20 @@ func (s *ItemServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListRes
 		return nil, status.Errorf(codes.Internal, "list item error")
 	}
 
-	items := make([]*pb.ListItemInfo, 0, len(l))
+	items := make([]*pb.ItemInfo, 0, len(l))
 	for _, i := range l {
-		d := &pb.ListItemInfo{
-			Id:   i.ID,
-			Name: i.Name,
-			Type: i.Type,
+		d := &pb.ItemInfo{
+			Id: i.ID,
+			Item: &pb.Item{
+				Name: i.Name,
+				Type: i.Type,
+			},
 		}
 		items = append(items, d)
 	}
 
-	resp := pb.ListResponse{
-		Data: items,
+	resp := pb.ListItemsResponse{
+		Items: items,
 	}
 
 	log.Ctx(ctx).Printf("Get item success")
