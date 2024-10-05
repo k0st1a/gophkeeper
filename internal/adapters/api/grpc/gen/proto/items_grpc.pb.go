@@ -19,11 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ItemsService_Create_FullMethodName         = "/items.v3.ItemsService/Create"
-	ItemsService_UpdateItemData_FullMethodName = "/items.v3.ItemsService/UpdateItemData"
-	ItemsService_Get_FullMethodName            = "/items.v3.ItemsService/Get"
-	ItemsService_List_FullMethodName           = "/items.v3.ItemsService/List"
-	ItemsService_Delete_FullMethodName         = "/items.v3.ItemsService/Delete"
+	ItemsService_CreateItem_FullMethodName = "/items.v1.ItemsService/CreateItem"
+	ItemsService_UpdateItem_FullMethodName = "/items.v1.ItemsService/UpdateItem"
+	ItemsService_GetItem_FullMethodName    = "/items.v1.ItemsService/GetItem"
+	ItemsService_ListItems_FullMethodName  = "/items.v1.ItemsService/ListItems"
+	ItemsService_DeleteItem_FullMethodName = "/items.v1.ItemsService/DeleteItem"
 )
 
 // ItemsServiceClient is the client API for ItemsService service.
@@ -33,15 +33,15 @@ const (
 // ItemsService is service for CRUD under users data.
 type ItemsServiceClient interface {
 	// Create creates a item.
-	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
+	CreateItem(ctx context.Context, in *CreateItemRequest, opts ...grpc.CallOption) (*CreateItemResponse, error)
 	// UpdateItemData updates field data of a item.
-	UpdateItemData(ctx context.Context, in *UpdateItemDataRequest, opts ...grpc.CallOption) (*UpdateItemDataResponse, error)
+	UpdateItem(ctx context.Context, in *UpdateItemRequest, opts ...grpc.CallOption) (*UpdateItemResponse, error)
 	// Get gets a item.
-	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	GetItem(ctx context.Context, in *GetItemRequest, opts ...grpc.CallOption) (*GetItemResponse, error)
 	// List gets lists of items.
-	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
+	ListItems(ctx context.Context, in *ListItemsRequest, opts ...grpc.CallOption) (*ListItemsResponse, error)
 	// Delete deletes a item.
-	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	DeleteItem(ctx context.Context, in *DeleteItemRequest, opts ...grpc.CallOption) (*DeleteItemResponse, error)
 }
 
 type itemsServiceClient struct {
@@ -52,50 +52,50 @@ func NewItemsServiceClient(cc grpc.ClientConnInterface) ItemsServiceClient {
 	return &itemsServiceClient{cc}
 }
 
-func (c *itemsServiceClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error) {
+func (c *itemsServiceClient) CreateItem(ctx context.Context, in *CreateItemRequest, opts ...grpc.CallOption) (*CreateItemResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateResponse)
-	err := c.cc.Invoke(ctx, ItemsService_Create_FullMethodName, in, out, cOpts...)
+	out := new(CreateItemResponse)
+	err := c.cc.Invoke(ctx, ItemsService_CreateItem_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *itemsServiceClient) UpdateItemData(ctx context.Context, in *UpdateItemDataRequest, opts ...grpc.CallOption) (*UpdateItemDataResponse, error) {
+func (c *itemsServiceClient) UpdateItem(ctx context.Context, in *UpdateItemRequest, opts ...grpc.CallOption) (*UpdateItemResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateItemDataResponse)
-	err := c.cc.Invoke(ctx, ItemsService_UpdateItemData_FullMethodName, in, out, cOpts...)
+	out := new(UpdateItemResponse)
+	err := c.cc.Invoke(ctx, ItemsService_UpdateItem_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *itemsServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+func (c *itemsServiceClient) GetItem(ctx context.Context, in *GetItemRequest, opts ...grpc.CallOption) (*GetItemResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, ItemsService_Get_FullMethodName, in, out, cOpts...)
+	out := new(GetItemResponse)
+	err := c.cc.Invoke(ctx, ItemsService_GetItem_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *itemsServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
+func (c *itemsServiceClient) ListItems(ctx context.Context, in *ListItemsRequest, opts ...grpc.CallOption) (*ListItemsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListResponse)
-	err := c.cc.Invoke(ctx, ItemsService_List_FullMethodName, in, out, cOpts...)
+	out := new(ListItemsResponse)
+	err := c.cc.Invoke(ctx, ItemsService_ListItems_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *itemsServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+func (c *itemsServiceClient) DeleteItem(ctx context.Context, in *DeleteItemRequest, opts ...grpc.CallOption) (*DeleteItemResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteResponse)
-	err := c.cc.Invoke(ctx, ItemsService_Delete_FullMethodName, in, out, cOpts...)
+	out := new(DeleteItemResponse)
+	err := c.cc.Invoke(ctx, ItemsService_DeleteItem_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -109,15 +109,15 @@ func (c *itemsServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts
 // ItemsService is service for CRUD under users data.
 type ItemsServiceServer interface {
 	// Create creates a item.
-	Create(context.Context, *CreateRequest) (*CreateResponse, error)
+	CreateItem(context.Context, *CreateItemRequest) (*CreateItemResponse, error)
 	// UpdateItemData updates field data of a item.
-	UpdateItemData(context.Context, *UpdateItemDataRequest) (*UpdateItemDataResponse, error)
+	UpdateItem(context.Context, *UpdateItemRequest) (*UpdateItemResponse, error)
 	// Get gets a item.
-	Get(context.Context, *GetRequest) (*GetResponse, error)
+	GetItem(context.Context, *GetItemRequest) (*GetItemResponse, error)
 	// List gets lists of items.
-	List(context.Context, *ListRequest) (*ListResponse, error)
+	ListItems(context.Context, *ListItemsRequest) (*ListItemsResponse, error)
 	// Delete deletes a item.
-	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	DeleteItem(context.Context, *DeleteItemRequest) (*DeleteItemResponse, error)
 	mustEmbedUnimplementedItemsServiceServer()
 }
 
@@ -128,20 +128,20 @@ type ItemsServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedItemsServiceServer struct{}
 
-func (UnimplementedItemsServiceServer) Create(context.Context, *CreateRequest) (*CreateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+func (UnimplementedItemsServiceServer) CreateItem(context.Context, *CreateItemRequest) (*CreateItemResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateItem not implemented")
 }
-func (UnimplementedItemsServiceServer) UpdateItemData(context.Context, *UpdateItemDataRequest) (*UpdateItemDataResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateItemData not implemented")
+func (UnimplementedItemsServiceServer) UpdateItem(context.Context, *UpdateItemRequest) (*UpdateItemResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateItem not implemented")
 }
-func (UnimplementedItemsServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+func (UnimplementedItemsServiceServer) GetItem(context.Context, *GetItemRequest) (*GetItemResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetItem not implemented")
 }
-func (UnimplementedItemsServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
+func (UnimplementedItemsServiceServer) ListItems(context.Context, *ListItemsRequest) (*ListItemsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListItems not implemented")
 }
-func (UnimplementedItemsServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+func (UnimplementedItemsServiceServer) DeleteItem(context.Context, *DeleteItemRequest) (*DeleteItemResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteItem not implemented")
 }
 func (UnimplementedItemsServiceServer) mustEmbedUnimplementedItemsServiceServer() {}
 func (UnimplementedItemsServiceServer) testEmbeddedByValue()                      {}
@@ -164,92 +164,92 @@ func RegisterItemsServiceServer(s grpc.ServiceRegistrar, srv ItemsServiceServer)
 	s.RegisterService(&ItemsService_ServiceDesc, srv)
 }
 
-func _ItemsService_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateRequest)
+func _ItemsService_CreateItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateItemRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ItemsServiceServer).Create(ctx, in)
+		return srv.(ItemsServiceServer).CreateItem(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ItemsService_Create_FullMethodName,
+		FullMethod: ItemsService_CreateItem_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ItemsServiceServer).Create(ctx, req.(*CreateRequest))
+		return srv.(ItemsServiceServer).CreateItem(ctx, req.(*CreateItemRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ItemsService_UpdateItemData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateItemDataRequest)
+func _ItemsService_UpdateItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateItemRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ItemsServiceServer).UpdateItemData(ctx, in)
+		return srv.(ItemsServiceServer).UpdateItem(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ItemsService_UpdateItemData_FullMethodName,
+		FullMethod: ItemsService_UpdateItem_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ItemsServiceServer).UpdateItemData(ctx, req.(*UpdateItemDataRequest))
+		return srv.(ItemsServiceServer).UpdateItem(ctx, req.(*UpdateItemRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ItemsService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRequest)
+func _ItemsService_GetItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetItemRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ItemsServiceServer).Get(ctx, in)
+		return srv.(ItemsServiceServer).GetItem(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ItemsService_Get_FullMethodName,
+		FullMethod: ItemsService_GetItem_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ItemsServiceServer).Get(ctx, req.(*GetRequest))
+		return srv.(ItemsServiceServer).GetItem(ctx, req.(*GetItemRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ItemsService_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListRequest)
+func _ItemsService_ListItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListItemsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ItemsServiceServer).List(ctx, in)
+		return srv.(ItemsServiceServer).ListItems(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ItemsService_List_FullMethodName,
+		FullMethod: ItemsService_ListItems_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ItemsServiceServer).List(ctx, req.(*ListRequest))
+		return srv.(ItemsServiceServer).ListItems(ctx, req.(*ListItemsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ItemsService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteRequest)
+func _ItemsService_DeleteItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteItemRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ItemsServiceServer).Delete(ctx, in)
+		return srv.(ItemsServiceServer).DeleteItem(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ItemsService_Delete_FullMethodName,
+		FullMethod: ItemsService_DeleteItem_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ItemsServiceServer).Delete(ctx, req.(*DeleteRequest))
+		return srv.(ItemsServiceServer).DeleteItem(ctx, req.(*DeleteItemRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -258,28 +258,28 @@ func _ItemsService_Delete_Handler(srv interface{}, ctx context.Context, dec func
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ItemsService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "items.v3.ItemsService",
+	ServiceName: "items.v1.ItemsService",
 	HandlerType: (*ItemsServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Create",
-			Handler:    _ItemsService_Create_Handler,
+			MethodName: "CreateItem",
+			Handler:    _ItemsService_CreateItem_Handler,
 		},
 		{
-			MethodName: "UpdateItemData",
-			Handler:    _ItemsService_UpdateItemData_Handler,
+			MethodName: "UpdateItem",
+			Handler:    _ItemsService_UpdateItem_Handler,
 		},
 		{
-			MethodName: "Get",
-			Handler:    _ItemsService_Get_Handler,
+			MethodName: "GetItem",
+			Handler:    _ItemsService_GetItem_Handler,
 		},
 		{
-			MethodName: "List",
-			Handler:    _ItemsService_List_Handler,
+			MethodName: "ListItems",
+			Handler:    _ItemsService_ListItems_Handler,
 		},
 		{
-			MethodName: "Delete",
-			Handler:    _ItemsService_Delete_Handler,
+			MethodName: "DeleteItem",
+			Handler:    _ItemsService_DeleteItem_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -29,6 +29,31 @@ const (
 	formFile     = "file"
 )
 
+const (
+	fnDescription          = "Description"
+	fnUsername             = "Username"
+	fnPassword             = "Password"
+	fnMetadata             = "Metadata"
+	fnPath                 = "Path"
+	fnText                 = "Text"
+	fnNumber               = "Number"
+	fnOwner                = "Owner"
+	fnTerm                 = "Term"
+	fnTemplateTermDesc     = "Template for term"
+	fnTemplateHintTermDesc = "Please enter Term in format MM/YY, where MM - month, YY - year"
+	fnDateFormat           = "02/01/2006 03:04.000"
+)
+
+const (
+	colID = iota
+	colDesc
+	colCreated
+	colModified
+	colType
+	colHash
+	colVersion
+)
+
 type client struct {
 	grpc  grpc.GrpcClient
 	app   *tview.Application
@@ -241,26 +266,214 @@ func (c *client) LoginPage() {
 	c.pages.AddPage(pageNameLogin, loginFlexBox, true, true)
 }
 
-func (c *client) ItemsPage() {
+func (c *client) ItemsPage(ctx context.Context, offset int, limit int) {
 	log.Printf("Invoked Items Page")
+	curOst := offset
+	curLt := limit
 
-	itemsForm := tview.NewForm()
-	itemsForm.
-		AddInputField("Email", "", 30, nil, nil).
-		AddPasswordField("Password", "", 20, '*', nil).
-		AddButton("Cancel", func() {
-			c.pages.RemovePage(pageNameItems)
-			c.WelcomePage()
+	list, err := c.grpc.ListItem(context.Background(), email, password)
+
+	table := tview.NewTable().
+		SetCell(0, colID, addTableHeaderCell("ID")).
+		SetCell(0, colDesc, addTableHeaderCell(strings.ToUpper(fnDescription))).
+		SetCell(0, colCreated, addTableHeaderCell("CREATED")).
+		SetCell(0, colModified, addTableHeaderCell("MODIFIED")).
+		SetCell(0, colType, addTableHeaderCell("TYPE")).
+		SetCell(0, colHash, addTableHeaderCell("HASHSUM")).
+		SetCell(0, colVersion, addTableHeaderCell("VERSION"))
+
+	for r := curOst; r < len(list); r++ {
+		record := rs[r]
+		rn := r + 1
+
+		table.SetCell(rn, colID, addTableCell(record.ID))
+		table.SetCell(rn, colDesc, addTableHeaderCell(record.Description))
+		table.SetCell(rn, colCreated, addTableHeaderCell(record.Created.Format(fnDateFormat)))
+		table.SetCell(rn, colModified, addTableHeaderCell(record.Modified.Format(fnDateFormat)))
+		table.SetCell(rn, colType, addTableHeaderCell(record.Type))
+		table.SetCell(rn, colHash, addTableHeaderCell(record.Hashsum))
+		table.SetCell(rn, colVersion, addTableHeaderCell(strconv.FormatInt(record.GetVersion(), 10)))
+
+		if rn >= curOst+ui.recLimit {
+			break
+		}
+	}
+	table.SetSelectable(true, false)
+
+	table.SetSelectedFunc(func(row int, column int) {
+		recordID := table.GetCell(row, colID).Text
+		if strings.TrimSpace(recordID) == "" {
+			ui.displayErr("record id is empty")
+			return
+		}
+
+		dataType := table.GetCell(row, colType).Text
+		switch dataType {
+		case string(models.AuthType):
+			ui.displayUpdateAuth(ctx, recordID)
+		case string(models.TextType):
+			ui.displayUpdateText(ctx, recordID)
+		case string(models.BinaryType):
+			ui.displayUpdateBinary(ctx, recordID)
+		case string(models.CardType):
+			ui.displayUpdateCard(ctx, recordID)
+		default:
+			ui.displayErr("Unknow type")
+		}
+	})
+
+	buttonsManageList := tview.NewForm().
+		AddButton("<", func() {
+			curOst := max(0, curOst-curLt)
+
+			ui.pages.RemovePage(pageListRecords)
+			ui.displayRecords(ctx, curOst, curLt)
+		}).
+		AddButton("Refresh", func() {
+			ui.pages.RemovePage(pageListRecords)
+			ui.displayRecords(ctx, curOst, curLt)
+		}).
+		AddButton(">", func() {
+			curOst := curOst + curLt
+
+			ui.pages.RemovePage(pageListRecords)
+			ui.displayRecords(ctx, curOst, curLt)
+		}).
+		AddButton("Back to menu", func() {
+			ui.pages.RemovePage(pageListRecords)
 		})
+	buttonsManageList.SetButtonsAlign(tview.AlignLeft).
+		SetBorderPadding(0, 0, 0, 0)
 
-	itemsForm.
-		SetTitle("Items").
-		SetBorder(true).
-		SetBorderColor(tcell.ColorSteelBlue)
+	buttons := tview.NewForm().
+		AddButton("Add auth", func() { ui.displayCreateAuth(ctx) }).
+		AddButton("Add text", func() { ui.displayCreateText(ctx) }).
+		AddButton("Add file", func() { ui.displayCreateBinary(ctx) }).
+		AddButton("Add card", func() { ui.displayCreateCard(ctx) })
 
-	itemsFlexBox := tview.NewFlex().
-		SetDirection(tview.FlexRow).
-		AddItem(itemsForm, 0, 1, true)
+	buttons.SetButtonsAlign(tview.AlignLeft).SetBorderPadding(0, 0, 0, 0)
+
+	flex := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(buttons, 1, 1, false).
+		AddItem(table, 0, 1, true).
+		AddItem(buttonsManageList, 1, 1, false)
+
+	flex.SetBorder(true)
+
+	ui.pages.AddPage(pageListRecords, flex, true, true)
 
 	c.pages.AddPage(pageNameItems, itemsFlexBox, true, true)
+}
+
+func (c *client) ItemsPage(ctx context.Context, offset, limit int) {
+	curOst := offset
+	curLt := limit
+
+	rs, err := ui.authUser.GetRecords(ctx, ui.cache, curOst, curLt)
+	if err != nil {
+		ui.displayErr(fmt.Sprintf("an error occured while retrieving record list, err: %v", err))
+		return
+	}
+
+	table := tview.NewTable()
+
+	table.SetCell(0, colID, addTableHeaderCell("ID"))
+	table.SetCell(0, colDesc, addTableHeaderCell(strings.ToUpper(fnDescription)))
+	table.SetCell(0, colCreated, addTableHeaderCell("CREATED"))
+	table.SetCell(0, colModified, addTableHeaderCell("MODIFIED"))
+	table.SetCell(0, colType, addTableHeaderCell("TYPE"))
+	table.SetCell(0, colHash, addTableHeaderCell("HASHSUM"))
+	table.SetCell(0, colVersion, addTableHeaderCell("VERSION"))
+
+	for r := curOst; r < len(rs); r++ {
+		record := rs[r]
+		rn := r + 1
+
+		table.SetCell(rn, colID, addTableCell(record.ID))
+		table.SetCell(rn, colDesc, addTableHeaderCell(record.Description))
+		table.SetCell(rn, colCreated, addTableHeaderCell(record.Created.Format(fnDateFormat)))
+		table.SetCell(rn, colModified, addTableHeaderCell(record.Modified.Format(fnDateFormat)))
+		table.SetCell(rn, colType, addTableHeaderCell(record.Type))
+		table.SetCell(rn, colHash, addTableHeaderCell(record.Hashsum))
+		table.SetCell(rn, colVersion, addTableHeaderCell(strconv.FormatInt(record.GetVersion(), 10)))
+
+		if rn >= curOst+ui.recLimit {
+			break
+		}
+	}
+	table.SetSelectable(true, false)
+
+	table.SetSelectedFunc(func(row int, column int) {
+		recordID := table.GetCell(row, colID).Text
+		if strings.TrimSpace(recordID) == "" {
+			ui.displayErr("record id is empty")
+			return
+		}
+
+		dataType := table.GetCell(row, colType).Text
+		switch dataType {
+		case string(models.AuthType):
+			ui.displayUpdateAuth(ctx, recordID)
+		case string(models.TextType):
+			ui.displayUpdateText(ctx, recordID)
+		case string(models.BinaryType):
+			ui.displayUpdateBinary(ctx, recordID)
+		case string(models.CardType):
+			ui.displayUpdateCard(ctx, recordID)
+		default:
+			ui.displayErr("Unknow type")
+		}
+	})
+
+	buttonsManageList := tview.NewForm().
+		AddButton("<", func() {
+			curOst := max(0, curOst-curLt)
+
+			ui.pages.RemovePage(pageListRecords)
+			ui.displayRecords(ctx, curOst, curLt)
+		}).
+		AddButton("Refresh", func() {
+			ui.pages.RemovePage(pageListRecords)
+			ui.displayRecords(ctx, curOst, curLt)
+		}).
+		AddButton(">", func() {
+			curOst := curOst + curLt
+
+			ui.pages.RemovePage(pageListRecords)
+			ui.displayRecords(ctx, curOst, curLt)
+		}).
+		AddButton("Back to menu", func() {
+			ui.pages.RemovePage(pageListRecords)
+		})
+	buttonsManageList.SetButtonsAlign(tview.AlignLeft).
+		SetBorderPadding(0, 0, 0, 0)
+
+	buttons := tview.NewForm().
+		AddButton("Add auth", func() { ui.displayCreateAuth(ctx) }).
+		AddButton("Add text", func() { ui.displayCreateText(ctx) }).
+		AddButton("Add file", func() { ui.displayCreateBinary(ctx) }).
+		AddButton("Add card", func() { ui.displayCreateCard(ctx) })
+
+	buttons.SetButtonsAlign(tview.AlignLeft).SetBorderPadding(0, 0, 0, 0)
+
+	flex := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(buttons, 1, 1, false).
+		AddItem(table, 0, 1, true).
+		AddItem(buttonsManageList, 1, 1, false)
+
+	flex.SetBorder(true)
+
+	ui.pages.AddPage(pageListRecords, flex, true, true)
+}
+
+func addTableHeaderCell(name string) *tview.TableCell {
+	return tview.NewTableCell(name).
+		SetTextColor(tcell.ColorYellow).
+		SetAlign(tview.AlignCenter)
+}
+
+func addTableCell(name string) *tview.TableCell {
+	return tview.NewTableCell(name).
+		SetTextColor(tcell.ColorWhite).
+		SetAlign(tview.AlignLeft)
 }

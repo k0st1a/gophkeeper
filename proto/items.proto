@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package items.v3;
+package items.v1;
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
@@ -8,95 +8,76 @@ import "google/protobuf/timestamp.proto";
 // ItemsService is service for CRUD under users data.
 service ItemsService {
   // Create creates a item.
-  rpc Create (CreateRequest) returns (CreateResponse) {
-    option (google.api.http) = {
-        post: "/api/v1/items"
-        body: "*"
-    };
-  };
+  rpc CreateItem (CreateItemRequest) returns (CreateItemResponse) {}
   // UpdateItemData updates field data of a item.
-  rpc UpdateItemData (UpdateItemDataRequest) returns (UpdateItemDataResponse) {
-    option (google.api.http) = {
-        put: "/api/v1/items/{id}"
-        body: "*"
-    };
-  };
+  rpc UpdateItem (UpdateItemRequest) returns (UpdateItemResponse) {}
   // Get gets a item.
-  rpc Get (GetRequest) returns (GetResponse) {
-    option (google.api.http) = {
-        get: "/api/v1/items/{id}"
-    };
-  };
+  rpc GetItem (GetItemRequest) returns (GetItemResponse) {}
   // List gets lists of items.
-  rpc List (ListRequest) returns (ListResponse) {
-    option (google.api.http) = {
-        get: "/api/v1/items"
-    };
-  };
+  rpc ListItems(ListItemsRequest) returns (ListItemsResponse) {}
   // Delete deletes a item.
-  rpc Delete (DeleteRequest) returns (DeleteResponse) {
-    option (google.api.http) = {
-        delete: "/api/v1/items/{id}"
-    };
-  };
+  rpc DeleteItem (DeleteItemRequest) returns (DeleteItemResponse) {}
+}
+
+enum ItemType {
+  UNKNOWN_TYPE = 0;
+  PASSWORD = 1;
+  CARD = 2;
+  NOTE = 3;
+  BINARY = 4;
 }
 
 message Item {
-    string name = 1;
-    string type = 2;
-    bytes data = 3;
+    string name = 2;
+    string description = 3;
+    ItemType type = 4;
+    bytes data = 5;
 }
 
 message ItemInfo {
     int64 id = 1;
     Item item = 2;
-    google.protobuf.Timestamp created_at = 3;
+    google.protobuf.Timestamp create_time = 3;
+    google.protobuf.Timestamp update_teme = 4;
 }
 
-message CreateRequest {
+message CreateItemRequest {
     Item item = 1;
 }
 
-message CreateResponse {
+message CreateItemResponse {
     int64 id = 1;
 }
 
-message UpdateItemDataRequest {
+message UpdateItemRequest {
     int64 id = 1;
-    bytes data = 2;
+    Item item = 2;
 }
 
-message UpdateItemDataResponse {
+message UpdateItemResponse {
 }
 
-message GetRequest {
-    int64 id = 1;
-}
-
-message GetItemInfo {
-}
-
-message GetResponse {
-    ItemInfo data = 1;
-}
-
-message ListRequest {
-}
-
-message ListItemInfo {
-    int64 id = 1;
-    string name = 2;
-    string type = 3;
-    google.protobuf.Timestamp created_at = 4;
-}
-
-message ListResponse {
-    repeated ListItemInfo data = 1;
-}
-
-message DeleteRequest {
+message GetItemRequest {
     int64 id = 1;
 }
 
-message DeleteResponse {
+message GetItemResponse {
+    ItemInfo item_info = 1;
+}
+
+message ListItemsRequest {
+    int32 page_limit = 1;
+    int32 page_size = 2;
+    ItemType type = 3;
+}
+
+message ListItemsResponse {
+    repeated ItemInfo items = 1;
+}
+
+message DeleteItemRequest {
+    int64 id = 1;
+}
+
+message DeleteItemResponse {
 }
