@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	grpc "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/client"
 
@@ -27,6 +28,8 @@ const (
 	formCard     = "card"
 	formNote     = "note"
 	formFile     = "file"
+
+	pageSize = 40
 )
 
 const (
@@ -46,12 +49,11 @@ const (
 
 const (
 	colID = iota
-	colDesc
-	colCreated
-	colModified
 	colType
-	colHash
-	colVersion
+	colName
+	colDescription
+	colCreateTime
+	colUpdateTime
 )
 
 type client struct {
@@ -246,7 +248,10 @@ func (c *client) LoginPage() {
 			//c.ItemsPage()
 			log.Printf("Success login fast")
 
-			c.NotifyAndSwitch2Page("Success login", c.ItemsPage)
+			c.NotifyAndSwitch2Page("Success login",
+				func() {
+					c.ItemsPage(context.Background(), 0, pageSize)
+				})
 			log.Printf("Success login fast")
 		}).
 		AddButton("Cancel", func() {
@@ -266,214 +271,171 @@ func (c *client) LoginPage() {
 	c.pages.AddPage(pageNameLogin, loginFlexBox, true, true)
 }
 
-func (c *client) ItemsPage(ctx context.Context, offset int, limit int) {
-	log.Printf("Invoked Items Page")
-	curOst := offset
-	curLt := limit
+func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
+	log.Printf("Invoked Items Page, page_offset:%v, page_size:%v", page_offset, page_size)
 
-	list, err := c.grpc.ListItem(context.Background(), email, password)
-
-	table := tview.NewTable().
-		SetCell(0, colID, addTableHeaderCell("ID")).
-		SetCell(0, colDesc, addTableHeaderCell(strings.ToUpper(fnDescription))).
-		SetCell(0, colCreated, addTableHeaderCell("CREATED")).
-		SetCell(0, colModified, addTableHeaderCell("MODIFIED")).
-		SetCell(0, colType, addTableHeaderCell("TYPE")).
-		SetCell(0, colHash, addTableHeaderCell("HASHSUM")).
-		SetCell(0, colVersion, addTableHeaderCell("VERSION"))
-
-	for r := curOst; r < len(list); r++ {
-		record := rs[r]
-		rn := r + 1
-
-		table.SetCell(rn, colID, addTableCell(record.ID))
-		table.SetCell(rn, colDesc, addTableHeaderCell(record.Description))
-		table.SetCell(rn, colCreated, addTableHeaderCell(record.Created.Format(fnDateFormat)))
-		table.SetCell(rn, colModified, addTableHeaderCell(record.Modified.Format(fnDateFormat)))
-		table.SetCell(rn, colType, addTableHeaderCell(record.Type))
-		table.SetCell(rn, colHash, addTableHeaderCell(record.Hashsum))
-		table.SetCell(rn, colVersion, addTableHeaderCell(strconv.FormatInt(record.GetVersion(), 10)))
-
-		if rn >= curOst+ui.recLimit {
-			break
-		}
-	}
-	table.SetSelectable(true, false)
-
-	table.SetSelectedFunc(func(row int, column int) {
-		recordID := table.GetCell(row, colID).Text
-		if strings.TrimSpace(recordID) == "" {
-			ui.displayErr("record id is empty")
-			return
-		}
-
-		dataType := table.GetCell(row, colType).Text
-		switch dataType {
-		case string(models.AuthType):
-			ui.displayUpdateAuth(ctx, recordID)
-		case string(models.TextType):
-			ui.displayUpdateText(ctx, recordID)
-		case string(models.BinaryType):
-			ui.displayUpdateBinary(ctx, recordID)
-		case string(models.CardType):
-			ui.displayUpdateCard(ctx, recordID)
-		default:
-			ui.displayErr("Unknow type")
-		}
-	})
-
-	buttonsManageList := tview.NewForm().
-		AddButton("<", func() {
-			curOst := max(0, curOst-curLt)
-
-			ui.pages.RemovePage(pageListRecords)
-			ui.displayRecords(ctx, curOst, curLt)
-		}).
-		AddButton("Refresh", func() {
-			ui.pages.RemovePage(pageListRecords)
-			ui.displayRecords(ctx, curOst, curLt)
-		}).
-		AddButton(">", func() {
-			curOst := curOst + curLt
-
-			ui.pages.RemovePage(pageListRecords)
-			ui.displayRecords(ctx, curOst, curLt)
-		}).
-		AddButton("Back to menu", func() {
-			ui.pages.RemovePage(pageListRecords)
-		})
-	buttonsManageList.SetButtonsAlign(tview.AlignLeft).
-		SetBorderPadding(0, 0, 0, 0)
-
-	buttons := tview.NewForm().
-		AddButton("Add auth", func() { ui.displayCreateAuth(ctx) }).
-		AddButton("Add text", func() { ui.displayCreateText(ctx) }).
-		AddButton("Add file", func() { ui.displayCreateBinary(ctx) }).
-		AddButton("Add card", func() { ui.displayCreateCard(ctx) })
-
-	buttons.SetButtonsAlign(tview.AlignLeft).SetBorderPadding(0, 0, 0, 0)
-
-	flex := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(buttons, 1, 1, false).
-		AddItem(table, 0, 1, true).
-		AddItem(buttonsManageList, 1, 1, false)
-
-	flex.SetBorder(true)
-
-	ui.pages.AddPage(pageListRecords, flex, true, true)
-
-	c.pages.AddPage(pageNameItems, itemsFlexBox, true, true)
-}
-
-func (c *client) ItemsPage(ctx context.Context, offset, limit int) {
-	curOst := offset
-	curLt := limit
-
-	rs, err := ui.authUser.GetRecords(ctx, ui.cache, curOst, curLt)
+	list, err := c.grpc.ListItems(context.Background(), page_offset, page_size)
 	if err != nil {
-		ui.displayErr(fmt.Sprintf("an error occured while retrieving record list, err: %v", err))
+		c.ErrorPage(fmt.Sprintf("error while get list items:%v", err))
 		return
 	}
 
-	table := tview.NewTable()
+	table := tview.NewTable().
+		SetCell(0, colID, tview.NewTableCell("Id")).
+		SetCell(0, colType, tview.NewTableCell("Type")).
+		SetCell(0, colName, tview.NewTableCell("Name")).
+		SetCell(0, colDescription, tview.NewTableCell("Description")).
+		SetCell(0, colCreateTime, tview.NewTableCell("Create time")).
+		SetCell(0, colUpdateTime, tview.NewTableCell("Update time"))
 
-	table.SetCell(0, colID, addTableHeaderCell("ID"))
-	table.SetCell(0, colDesc, addTableHeaderCell(strings.ToUpper(fnDescription)))
-	table.SetCell(0, colCreated, addTableHeaderCell("CREATED"))
-	table.SetCell(0, colModified, addTableHeaderCell("MODIFIED"))
-	table.SetCell(0, colType, addTableHeaderCell("TYPE"))
-	table.SetCell(0, colHash, addTableHeaderCell("HASHSUM"))
-	table.SetCell(0, colVersion, addTableHeaderCell("VERSION"))
-
-	for r := curOst; r < len(rs); r++ {
-		record := rs[r]
-		rn := r + 1
-
-		table.SetCell(rn, colID, addTableCell(record.ID))
-		table.SetCell(rn, colDesc, addTableHeaderCell(record.Description))
-		table.SetCell(rn, colCreated, addTableHeaderCell(record.Created.Format(fnDateFormat)))
-		table.SetCell(rn, colModified, addTableHeaderCell(record.Modified.Format(fnDateFormat)))
-		table.SetCell(rn, colType, addTableHeaderCell(record.Type))
-		table.SetCell(rn, colHash, addTableHeaderCell(record.Hashsum))
-		table.SetCell(rn, colVersion, addTableHeaderCell(strconv.FormatInt(record.GetVersion(), 10)))
-
-		if rn >= curOst+ui.recLimit {
-			break
-		}
+	for r, item := range list {
+		table.SetCell(r, colID, tview.NewTableCell(strconv.FormatInt(item.ID, 10)))
+		table.SetCell(r, colType, tview.NewTableCell(item.Type))
+		table.SetCell(r, colName, tview.NewTableCell(item.Name))
 	}
+
 	table.SetSelectable(true, false)
 
-	table.SetSelectedFunc(func(row int, column int) {
-		recordID := table.GetCell(row, colID).Text
-		if strings.TrimSpace(recordID) == "" {
-			ui.displayErr("record id is empty")
-			return
-		}
+	table.SetSelectedFunc(func(row, column int) {
+		itemID := table.GetCell(row, colID).Text
+		itemType := table.GetCell(row, colType).Text
 
-		dataType := table.GetCell(row, colType).Text
-		switch dataType {
-		case string(models.AuthType):
-			ui.displayUpdateAuth(ctx, recordID)
-		case string(models.TextType):
-			ui.displayUpdateText(ctx, recordID)
-		case string(models.BinaryType):
-			ui.displayUpdateBinary(ctx, recordID)
-		case string(models.CardType):
-			ui.displayUpdateCard(ctx, recordID)
-		default:
-			ui.displayErr("Unknow type")
+		switch itemType {
+		case string(grpc.ItemTypePassword):
+			c.ViewPassword(ctx, itemID)
+		case string(grpc.ItemTypeCard):
+			c.ViewCard(ctx, itemID)
+		case string(grpc.ItemTypeNote):
+			c.ViewNote(ctx, itemID)
+		case string(grpc.ItemTypeFile):
+			c.ViewFile(ctx, itemID)
 		}
 	})
 
-	buttonsManageList := tview.NewForm().
-		AddButton("<", func() {
-			curOst := max(0, curOst-curLt)
-
-			ui.pages.RemovePage(pageListRecords)
-			ui.displayRecords(ctx, curOst, curLt)
+	navigateButtons := tview.NewForm().
+		AddButton("Prev", func() {
+			c.ItemsPage(ctx, max(page_offset-page_size), page_size)
 		}).
 		AddButton("Refresh", func() {
-			ui.pages.RemovePage(pageListRecords)
-			ui.displayRecords(ctx, curOst, curLt)
+			c.ItemsPage(ctx, page_offset, page_size)
 		}).
-		AddButton(">", func() {
-			curOst := curOst + curLt
-
-			ui.pages.RemovePage(pageListRecords)
-			ui.displayRecords(ctx, curOst, curLt)
-		}).
-		AddButton("Back to menu", func() {
-			ui.pages.RemovePage(pageListRecords)
+		AddButton("Next", func() {
+			c.ItemsPage(ctx, page_offset+page_size, page_size)
 		})
-	buttonsManageList.SetButtonsAlign(tview.AlignLeft).
+
+	navigateButtons.
+		SetButtonsAlign(tview.AlignLeft).
 		SetBorderPadding(0, 0, 0, 0)
 
+	editButtons := tview.NewForm().
+		AddButton("Add password", func() {
+			//c.AddPassword(ctx)
+		}).
+		AddButton("Add card", func() {
+			//c.AddCard(ctx)
+		}).
+		AddButton("Add notes", func() {
+			//c.AddNotes(ctx)
+		}).
+		AddButton("Add file", func() {
+			//c.AddFile(ctx)
+		})
+
+	editButtons.
+		SetButtonsAlign(tview.AlignLeft).
+		SetBorderPadding(0, 0, 0, 0)
+
+	flex := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(editButtons, 1, 1, false).
+		AddItem(table, 0, 1, true).
+		AddItem(navigateButtons, 1, 1, false)
+
+	flex.SetBorder(true)
+
+	c.pages.AddPage(pageNameItems, flex, true, true)
+}
+
+func (c *client) ViewPassword(ctx context.Context, itemID string) {
+	r, err := c.grpc.GetRecord(ctx, ui.cache, recordID)
+	if err != nil {
+		c.ErrorPage(err.Error())
+	}
+
+	a := &models.Auth{}
+	if err := cbor.Unmarshal(r.Data, a); err != nil {
+		ui.displayErr(fmt.Sprintf("unmarshal data auth binary, err: %v", err))
+		return
+	}
+
+	desc := r.Description
+	login := a.Login
+	pass := a.Password
+	metadata := r.Metadata
+	mit := convertMetadataToString(r.Metadata)
+	form := tview.NewForm().
+		AddInputField(fnDescription, r.Description, defaultFieldWidth, nil, func(v string) {
+			desc = v
+		}).
+		AddInputField(fnUsername, a.Login, defaultFieldWidth, nil, func(v string) {
+			login = v
+		}).
+		AddInputField(fnPassword, a.Password, defaultFieldWidth, nil, func(v string) {
+			pass = v
+		}).
+		AddTextArea(fnMetadata, mit, defaultFieldWidth, 0, 0, func(text string) {
+			mit = text
+		})
+
+	form.SetTitle(pageUpdateAuthRecord).
+		SetTitleAlign(tview.AlignLeft)
+
 	buttons := tview.NewForm().
-		AddButton("Add auth", func() { ui.displayCreateAuth(ctx) }).
-		AddButton("Add text", func() { ui.displayCreateText(ctx) }).
-		AddButton("Add file", func() { ui.displayCreateBinary(ctx) }).
-		AddButton("Add card", func() { ui.displayCreateCard(ctx) })
+		AddButton(buttonUpdate, func() {
+			auth := &models.Auth{
+				Login:    login,
+				Password: pass,
+			}
+
+			r, err := models.NewRecord(
+				r.ID,
+				desc,
+				models.AuthType,
+				r.Created,
+				time.Now(),
+				auth,
+				metadata,
+				false,
+				r.Version,
+			)
+			if err != nil {
+				ui.displayErr(err.Error())
+				return
+			}
+
+			rows := splitMetadata(mit)
+			m, err := models.NewMetadataFromStringArray(rows)
+			if err != nil {
+				ui.displayErr(err.Error())
+				return
+			}
+			r.Metadata = m
+
+			r.Version++
+			_, err = ui.authUser.UpdateRecord(ctx, ui.cache, r)
+			if err != nil {
+				ui.displayErr(err.Error())
+				return
+			}
+
+			ui.pages.RemovePage(pageUpdateAuthRecord)
+		}).
+		AddButton(buttonCancelDesc, func() { ui.pages.RemovePage(pageUpdateAuthRecord) })
 
 	buttons.SetButtonsAlign(tview.AlignLeft).SetBorderPadding(0, 0, 0, 0)
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(buttons, 1, 1, false).
-		AddItem(table, 0, 1, true).
-		AddItem(buttonsManageList, 1, 1, false)
+		AddItem(form, 0, 1, true).AddItem(buttons, 1, 1, false)
 
-	flex.SetBorder(true)
-
-	ui.pages.AddPage(pageListRecords, flex, true, true)
-}
-
-func addTableHeaderCell(name string) *tview.TableCell {
-	return tview.NewTableCell(name).
-		SetTextColor(tcell.ColorYellow).
-		SetAlign(tview.AlignCenter)
-}
-
-func addTableCell(name string) *tview.TableCell {
-	return tview.NewTableCell(name).
-		SetTextColor(tcell.ColorWhite).
-		SetAlign(tview.AlignLeft)
+	ui.pages.AddPage(pageUpdateAuthRecord, flex, true, true)
 }

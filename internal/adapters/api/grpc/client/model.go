@@ -12,3 +12,12 @@ type Item struct {
 	Type string
 	Data []byte
 }
+
+type ItemType string
+
+const (
+	ItemTypePassword ItemType = "password"
+	ItemTypeCard     ItemType = "card"
+	ItemTypeNote     ItemType = "note"
+	ItemTypeFile     ItemType = "file"
+)

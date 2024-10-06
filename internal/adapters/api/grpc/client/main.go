@@ -32,7 +32,7 @@ type UserAuthentication interface {
 
 type ItemManager interface {
 	GetItem(ctx context.Context, itemID int64) (*Item, error)
-	ListItem(ctx context.Context) ([]ListItem, error)
+	ListItems(ctx context.Context, page_limit, page_size int32) ([]ListItem, error)
 	CreateItem(ctx context.Context, name, dataType string, data []byte) error
 	UpdateItemData(ctx context.Context, itemID int64, data []byte) error
 }
@@ -140,13 +140,16 @@ func (c *grpcClient) GetItem(ctx context.Context, itemID int64) (*Item, error) {
 }
 
 // ListItem – получение всех мета-данных пользователя с сервера.
-func (c *grpcClient) ListItem(ctx context.Context) ([]ListItem, error) {
+func (c *grpcClient) ListItems(ctx context.Context, page_offset, page_size int32) ([]ListItem, error) {
 	log.Ctx(ctx).Printf("ListItem")
 
 	ctx, cancel := context.WithTimeout(ctx, c.requestTimeout)
 	defer cancel()
 
-	req := &pb.ListItemsRequest{}
+	req := &pb.ListItemsRequest{
+		PageOffset: page_offset,
+		PageSize:   page_size,
+	}
 	resp, err := c.itemsClient.ListItems(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("items client list error:%w", err)

@@ -66,9 +66,8 @@ message GetItemResponse {
 }
 
 message ListItemsRequest {
-    int32 page_limit = 1;
+    int32 page_offset = 1;
     int32 page_size = 2;
-    string type = 3;
 }
 
 message ListItemsResponse {
