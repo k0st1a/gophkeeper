@@ -27,10 +27,12 @@ type Info struct {
 	// UpdateTime - время обновления предмета, выставляется
 	// когда предмет был создан, обновлен, удален.
 	UpdateTime time.Time
-	// Deleted - флаг указывает но то, был ли удален файл.
-	Deleted bool
+	// MakrDelete - пометка для удаления предмета.
+	MarkDelete bool
 	// UploadTime - Время загрузки предмета на сервер.
 	UploadTime time.Time
+	// DownloadTime - Время скачивания предмета с сервера.
+	DownloadTime time.Time
 }
 
 // Map2List  - преобразование из map в list.

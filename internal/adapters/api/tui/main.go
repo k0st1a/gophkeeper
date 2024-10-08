@@ -8,6 +8,7 @@ import (
 	grpc "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/client"
 	"github.com/k0st1a/gophkeeper/internal/adapters/storage/inmemory"
 	"github.com/k0st1a/gophkeeper/internal/pkg/client/model/password"
+	"github.com/k0st1a/gophkeeper/internal/ports"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -46,31 +47,35 @@ const (
 )
 
 const (
-	colID = iota
-	colType
-	colName
-	colDescription
-	colCreateTime
-	colUpdateTime
+	columnName = iota
+	columnType
+	columnDescription
+	columnCreateTime
+	columnUpdateTime
+	columnMarkDelete
+	columnUploadTime
+	columnDownloadTime
+	columnID
 )
 
 type client struct {
 	grpc    grpc.GrpcClient
-	storage inmemory.Storage
+	storage *inmemory.Storage
 	app     *tview.Application
 	pages   *tview.Pages
 }
 
-func New(gc grpc.GrpcClient) *client {
+func New(gc grpc.GrpcClient, s *inmemory.Storage) *client {
 	app := tview.NewApplication()
 	pages := tview.NewPages()
 
 	app.SetRoot(pages, true).EnableMouse(true)
 
 	return &client{
-		grpc:  gc,
-		app:   app,
-		pages: pages,
+		grpc:    gc,
+		storage: s,
+		app:     app,
+		pages:   pages,
 	}
 }
 
@@ -273,41 +278,48 @@ func (c *client) LoginPage() {
 func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 	log.Printf("Invoked Items Page")
 
-	list, err := c.storage.ListItems(context.Background())
-	if err != nil {
-		c.ErrorPage(fmt.Sprintf("error while get list items:%v", err))
-		return
-	}
+	list := c.storage.ListItems(context.Background())
 
 	table := tview.NewTable().
-		SetCell(0, colID, tview.NewTableCell("Id")).
-		SetCell(0, colType, tview.NewTableCell("Type")).
-		SetCell(0, colName, tview.NewTableCell("Name")).
-		SetCell(0, colDescription, tview.NewTableCell("Description")).
-		SetCell(0, colCreateTime, tview.NewTableCell("Create time")).
-		SetCell(0, colUpdateTime, tview.NewTableCell("Update time"))
+		SetBorders(true).
+		SetCell(0, columnName, tview.NewTableCell("Name")).
+		SetCell(0, columnType, tview.NewTableCell("Type")).
+		SetCell(0, columnDescription, tview.NewTableCell("Description")).
+		SetCell(0, columnCreateTime, tview.NewTableCell("Create time")).
+		SetCell(0, columnUpdateTime, tview.NewTableCell("Update time")).
+		SetCell(0, columnMarkDelete, tview.NewTableCell("Marked for delete?")).
+		SetCell(0, columnUploadTime, tview.NewTableCell("Upload time")).
+		SetCell(0, columnDownloadTime, tview.NewTableCell("Download time")).
+		SetCell(0, columnID, tview.NewTableCell("Id"))
 
-	for r, item := range list {
-		table.SetCell(r, colID, tview.NewTableCell(strconv.FormatInt(item.ID, 10)))
-		table.SetCell(r, colType, tview.NewTableCell(item.Type))
-		table.SetCell(r, colName, tview.NewTableCell(item.Name))
+	for row, item := range list {
+		table.
+			SetCell(row, columnName, tview.NewTableCell(item.Name)).
+			SetCell(row, columnType, tview.NewTableCell(item.Type)).
+			SetCell(row, columnDescription, tview.NewTableCell(item.Description)).
+			SetCell(row, columnCreateTime, tview.NewTableCell(item.CreateTime.String())).
+			SetCell(row, columnUpdateTime, tview.NewTableCell(item.UpdateTime.String())).
+			SetCell(row, columnMarkDelete, tview.NewTableCell(strconv.FormatBool(item.MarkDelete))).
+			SetCell(row, columnUploadTime, tview.NewTableCell(item.UploadTime.String())).
+			SetCell(row, columnDownloadTime, tview.NewTableCell(item.DownloadTime.String())).
+			SetCell(row, columnID, tview.NewTableCell(item.ID))
 	}
 
 	table.SetSelectable(true, false)
 
 	table.SetSelectedFunc(func(row, column int) {
-		itemID := table.GetCell(row, colID).Text
-		itemType := table.GetCell(row, colType).Text
+		itemName := table.GetCell(row, columnName).Text
+		itemType := table.GetCell(row, columnType).Text
 
 		switch itemType {
-		case string(grpc.ItemTypePassword):
-			c.ViewPassword(ctx, itemID)
-		case string(grpc.ItemTypeCard):
-			c.ViewCard(ctx, itemID)
-		case string(grpc.ItemTypeNote):
-			c.ViewNote(ctx, itemID)
-		case string(grpc.ItemTypeFile):
-			c.ViewFile(ctx, itemID)
+		case string(ports.ItemTypePassword):
+			c.ViewPassword(ctx, itemName)
+		case string(ports.ItemTypeCard):
+			//c.ViewCard(ctx, itemName)
+		case string(ports.ItemTypeNote):
+			//c.ViewNote(ctx, itemName)
+		case string(ports.ItemTypeFile):
+			//c.ViewFile(ctx, itemName)
 		}
 	})
 
