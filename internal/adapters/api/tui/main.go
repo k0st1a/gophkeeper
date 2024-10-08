@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	// Имена страниц.
 	pageNameWelcome  = "welcome"
 	pageNameRegister = "register"
 	pageNameLogin    = "login"
@@ -23,17 +24,23 @@ const (
 	pageNameError  = "error"
 	pageNameNotify = "notify"
 
+	pageNameUpdatePassword = "update password"
+
+	// Имена кнопок.
 	buttonNameCancel = "Cancel"
 	buttonNameOk     = "Ok"
+	buttonNameUpdate = "Update"
 
 	formPassword = "password"
 	formCard     = "card"
 	formNote     = "note"
 	formFile     = "file"
 
-	labelDescription = "Description"
-	labelUserName       = "User name"
-	labelPassword    = "Password"
+	labelItemName        = "Item name"
+	labelItemDescription = "Item description"
+
+	labelUserName = "User name"
+	labelPassword = "Password"
 
 	defaultFieldWidth = 30
 )
@@ -242,7 +249,7 @@ func (c *client) LoginPage() {
 
 			c.NotifyAndSwitch2Page("Success login",
 				func() {
-					c.ItemsPage(context.Background(), 0, pageSize)
+					c.ItemsPage(context.Background(), 0, 20)
 				})
 			log.Printf("Success login fast")
 		}).
@@ -264,9 +271,9 @@ func (c *client) LoginPage() {
 }
 
 func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
-	log.Printf("Invoked Items Page, page_offset:%v, page_size:%v", page_offset, page_size)
+	log.Printf("Invoked Items Page")
 
-	list, err := c.grpc.ListItems(context.Background(), page_offset, page_size)
+	list, err := c.storage.ListItems(context.Background())
 	if err != nil {
 		c.ErrorPage(fmt.Sprintf("error while get list items:%v", err))
 		return
@@ -354,72 +361,64 @@ func (c *client) ViewPassword(ctx context.Context, name string) {
 		c.ErrorPage(err.Error())
 	}
 
+	p, err := password.Deserialize(i.Data)
+	if err != nil {
+		c.ErrorPage(err.Error())
+		return
+	}
+
 	form := tview.NewForm().
-		AddInputField(labelName, i.Name, defaultFieldWidth, nil, func(text string) {
+		AddInputField(labelItemName, i.Name, defaultFieldWidth, nil, func(text string) {
+			i.Name = text
+		}).
+		AddInputField(labelItemDescription, i.Description, defaultFieldWidth, nil, func(text string) {
 			i.Description = text
 		}).
-		AddInputField(labelDescription, i.Description, defaultFieldWidth, nil, func(text string) {
-			i.Description = text
+		AddInputField(labelUserName, p.UserName, defaultFieldWidth, nil, func(text string) {
+			p.UserName = text
 		}).
-		AddInputField(labelUserName, a.Login, defaultFieldWidth, nil, func(v string) {
-			i.= v
-		}).
-		AddInputField(fnPassword, a.Password, defaultFieldWidth, nil, func(v string) {
-			pass = v
-		}).
-		AddTextArea(fnMetadata, mit, defaultFieldWidth, 0, 0, func(text string) {
-			mit = text
+		AddInputField(labelPassword, p.Password, defaultFieldWidth, nil, func(text string) {
+			p.Password = text
 		})
 
-	form.SetTitle(pageUpdateAuthRecord).
+	form.
+		SetTitle("Update password").
 		SetTitleAlign(tview.AlignLeft)
 
 	buttons := tview.NewForm().
-		AddButton(buttonUpdate, func() {
-			auth := &models.Auth{
-				Login:    login,
-				Password: pass,
-			}
-
-			r, err := models.NewRecord(
-				r.ID,
-				desc,
-				models.AuthType,
-				r.Created,
-				time.Now(),
-				auth,
-				metadata,
-				false,
-				r.Version,
-			)
+		AddButton(buttonNameUpdate, func() {
+			d, err := password.Serialize(p)
 			if err != nil {
-				ui.displayErr(err.Error())
+				log.Printf("Password serialize error:%w", err)
+				c.ErrorPage(err.Error())
 				return
 			}
 
-			rows := splitMetadata(mit)
-			m, err := models.NewMetadataFromStringArray(rows)
-			if err != nil {
-				ui.displayErr(err.Error())
-				return
-			}
-			r.Metadata = m
+			log.Printf("Password serialized")
 
-			r.Version++
-			_, err = ui.authUser.UpdateRecord(ctx, ui.cache, r)
+			i.Data = d
+
+			err = c.storage.UpdateItem(ctx, i)
 			if err != nil {
-				ui.displayErr(err.Error())
+				log.Printf("item update error while update password:%w", err)
+				c.ErrorPage(err.Error())
 				return
 			}
 
-			ui.pages.RemovePage(pageUpdateAuthRecord)
+			c.pages.RemovePage(pageNameUpdatePassword)
 		}).
-		AddButton(buttonCancelDesc, func() { ui.pages.RemovePage(pageUpdateAuthRecord) })
+		AddButton(buttonNameCancel, func() {
+			c.pages.RemovePage(pageNameUpdatePassword)
+		})
 
-	buttons.SetButtonsAlign(tview.AlignLeft).SetBorderPadding(0, 0, 0, 0)
+	buttons.
+		SetButtonsAlign(tview.AlignLeft).
+		SetBorderPadding(0, 0, 0, 0)
 
-	flex := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(form, 0, 1, true).AddItem(buttons, 1, 1, false)
+	flex := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(form, 0, 1, true).
+		AddItem(buttons, 1, 1, false)
 
-	ui.pages.AddPage(pageUpdateAuthRecord, flex, true, true)
+	c.pages.AddPage(pageNameUpdatePassword, flex, true, true)
 }
