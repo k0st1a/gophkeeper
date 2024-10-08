@@ -248,7 +248,7 @@ func (c *client) LoginPage() {
 			//c.ItemsPage()
 			log.Printf("Success login fast")
 
-			c.NotifyAndSwitch2Page("Success login",
+			c.NotifyAndSwitch2Page("Success login", c.ItemsPage
 				func() {
 					c.ItemsPage(context.Background(), 0, pageSize)
 				})
