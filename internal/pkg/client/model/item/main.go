@@ -1,4 +1,4 @@
-package rawitem
+package item
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ var (
 	ErrorItemAlreadyExists = errors.New("item already exists")
 )
 
-// Info - структура для хранения "сырых" предметов.
+// Info - структура для хранения информации о предмете на стороне клиента.
 type Info struct {
 	// ID - идентификатор предмета.
 	ID string

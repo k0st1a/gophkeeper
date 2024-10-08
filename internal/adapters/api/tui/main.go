@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/k0st1a/gophkeeper/internal/adapters/storage/inmemory"
 	grpc "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/client"
+	"github.com/k0st1a/gophkeeper/internal/adapters/storage/inmemory"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -30,22 +30,11 @@ const (
 	formNote     = "note"
 	formFile     = "file"
 
-	pageSize = 40
-)
+	labelDescription = "Description"
+	labelUserName       = "User name"
+	labelPassword    = "Password"
 
-const (
-	fnDescription          = "Description"
-	fnUsername             = "Username"
-	fnPassword             = "Password"
-	fnMetadata             = "Metadata"
-	fnPath                 = "Path"
-	fnText                 = "Text"
-	fnNumber               = "Number"
-	fnOwner                = "Owner"
-	fnTerm                 = "Term"
-	fnTemplateTermDesc     = "Template for term"
-	fnTemplateHintTermDesc = "Please enter Term in format MM/YY, where MM - month, YY - year"
-	fnDateFormat           = "02/01/2006 03:04.000"
+	defaultFieldWidth = 30
 )
 
 const (
@@ -58,10 +47,10 @@ const (
 )
 
 type client struct {
-	grpc  grpc.GrpcClient
+	grpc    grpc.GrpcClient
 	storage inmemory.Storage
-	app   *tview.Application
-	pages *tview.Pages
+	app     *tview.Application
+	pages   *tview.Pages
 }
 
 func New(gc grpc.GrpcClient) *client {
@@ -250,7 +239,7 @@ func (c *client) LoginPage() {
 			//c.ItemsPage()
 			log.Printf("Success login fast")
 
-			c.NotifyAndSwitch2Page("Success login", c.ItemsPage
+			c.NotifyAndSwitch2Page("Success login",
 				func() {
 					c.ItemsPage(context.Background(), 0, pageSize)
 				})
@@ -358,29 +347,21 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 	c.pages.AddPage(pageNameItems, flex, true, true)
 }
 
-func (c *client) ViewPassword(ctx context.Context, itemID string) {
-	r, err := c.grpc.GetRecord(ctx, ui.cache, recordID)
+func (c *client) ViewPassword(ctx context.Context, name string) {
+	i, err := c.storage.GetItem(ctx, name)
 	if err != nil {
 		c.ErrorPage(err.Error())
 	}
 
-	a := &models.Auth{}
-	if err := cbor.Unmarshal(r.Data, a); err != nil {
-		ui.displayErr(fmt.Sprintf("unmarshal data auth binary, err: %v", err))
-		return
-	}
-
-	desc := r.Description
-	login := a.Login
-	pass := a.Password
-	metadata := r.Metadata
-	mit := convertMetadataToString(r.Metadata)
 	form := tview.NewForm().
-		AddInputField(fnDescription, r.Description, defaultFieldWidth, nil, func(v string) {
-			desc = v
+		AddInputField(labelName, i.Name, defaultFieldWidth, nil, func(text string) {
+			i.Description = text
 		}).
-		AddInputField(fnUsername, a.Login, defaultFieldWidth, nil, func(v string) {
-			login = v
+		AddInputField(labelDescription, i.Description, defaultFieldWidth, nil, func(text string) {
+			i.Description = text
+		}).
+		AddInputField(labelUserName, a.Login, defaultFieldWidth, nil, func(v string) {
+			i.= v
 		}).
 		AddInputField(fnPassword, a.Password, defaultFieldWidth, nil, func(v string) {
 			pass = v

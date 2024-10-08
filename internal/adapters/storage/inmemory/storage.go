@@ -4,36 +4,36 @@ import (
 	"context"
 	"sync"
 
-	"github.com/k0st1a/gophkeeper/internal/pkg/rawitem"
+	"github.com/k0st1a/gophkeeper/internal/pkg/client/model/item"
 )
 
 type Storage struct {
 	mutex *sync.RWMutex
-	items map[string]rawitem.Info
+	items map[string]item.Info
 }
 
 func New() *Storage {
 	return &Storage{
 		mutex: &sync.RWMutex{},
-		items: make(map[string]rawitem.Info),
+		items: make(map[string]item.Info),
 	}
 }
 
-func (s *Storage) ListItems(ctx context.Context) []rawitem.Info {
+func (s *Storage) ListItems(ctx context.Context) []item.Info {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
-	return rawitem.Map2List(s.items)
+	return item.Map2List(s.items)
 }
 
 // GetItem - возвращает указатель на копию предмета из Storage.
-func (s *Storage) GetItem(ctx context.Context, Name string) (*rawitem.Info, error) {
+func (s *Storage) GetItem(ctx context.Context, Name string) (*item.Info, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
 	i, ok := s.items[Name]
 	if !ok {
-		return nil, rawitem.ErrorItemNotFound
+		return nil, item.ErrorItemNotFound
 	}
 
 	info := i
@@ -42,13 +42,13 @@ func (s *Storage) GetItem(ctx context.Context, Name string) (*rawitem.Info, erro
 }
 
 // AddItem - добавляет предмет в Storage.
-func (s *Storage) AddItem(ctx context.Context, info *rawitem.Info) error {
+func (s *Storage) AddItem(ctx context.Context, info *item.Info) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	_, ok := s.items[info.Name]
 	if ok {
-		return rawitem.ErrorItemAlreadyExists
+		return item.ErrorItemAlreadyExists
 	}
 
 	s.items[info.Name] = *info
@@ -57,13 +57,13 @@ func (s *Storage) AddItem(ctx context.Context, info *rawitem.Info) error {
 }
 
 // UpdateItem - обновляет предмет в Storage.
-func (s *Storage) UpdateItem(ctx context.Context, info *rawitem.Info) error {
+func (s *Storage) UpdateItem(ctx context.Context, info *item.Info) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	_, ok := s.items[info.Name]
 	if !ok {
-		return rawitem.ErrorItemNotFound
+		return item.ErrorItemNotFound
 	}
 
 	s.items[info.Name] = *info
@@ -78,7 +78,7 @@ func (s *Storage) DeleteItem(ctx context.Context, Name string) error {
 
 	_, ok := s.items[Name]
 	if !ok {
-		return rawitem.ErrorItemNotFound
+		return item.ErrorItemNotFound
 	}
 
 	delete(s.items, Name)
