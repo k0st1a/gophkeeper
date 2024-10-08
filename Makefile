@@ -34,6 +34,14 @@ protobuf-install:
 	# export PATH="${PATH}:$(shell go env GOPATH)/bin"
 
 ##--------------------------------------------------------------------
+## EASYJSON INSTALL
+##--------------------------------------------------------------------
+.PHONY:easyjson-install
+easyjson-install:
+	go get github.com/mailru/easyjson && \
+	go install github.com/mailru/easyjson/...@latest
+
+##--------------------------------------------------------------------
 ## PROTOBUF GENERATE
 ##--------------------------------------------------------------------
 ## TODO: Версии пакетов должны быть одни и теже в рамках Makefile.
