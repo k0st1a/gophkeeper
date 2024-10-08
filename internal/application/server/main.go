@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	grpcserver "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/server"
-	"github.com/k0st1a/gophkeeper/internal/adapters/db"
+	"github.com/k0st1a/gophkeeper/internal/adapters/storage/db"
 	"github.com/k0st1a/gophkeeper/internal/application/server/config"
 	"github.com/k0st1a/gophkeeper/internal/pkg/auth"
 	"github.com/k0st1a/gophkeeper/internal/pkg/logwrap"

@@ -1,7 +1,6 @@
 package rawitem
 
 import (
-	"bytes"
 	"errors"
 	"time"
 )
@@ -32,4 +31,25 @@ type Info struct {
 	Deleted bool
 	// UploadTime - Время загрузки предмета на сервер.
 	UploadTime time.Time
+}
+
+// Map2List  - преобразование из map в list.
+func Map2List(m map[string]Info) []Info {
+	l := make([]Info, len(m))
+	i := 0
+	for _, v := range m {
+		l[i] = v
+		i++
+	}
+
+	return l
+}
+
+// Append - добавление в мапу.
+func Append(acc map[string]Info, add []Info) map[string]Info {
+	for _, v := range add {
+		acc[v.Name] = v
+	}
+
+	return acc
 }

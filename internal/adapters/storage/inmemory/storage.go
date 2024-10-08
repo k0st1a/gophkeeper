@@ -3,7 +3,6 @@ package inmemory
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/k0st1a/gophkeeper/internal/pkg/rawitem"
 )
@@ -24,10 +23,11 @@ func (s *Storage) ListItems(ctx context.Context) []rawitem.Info {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
-	return s.items
+	return rawitem.Map2List(s.items)
 }
 
-func (s *Storage) GetItem(ctx context.Context, Name string) (rawitem.Info, error) {
+// GetItem - возвращает указатель на копию предмета из Storage.
+func (s *Storage) GetItem(ctx context.Context, Name string) (*rawitem.Info, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -36,40 +36,47 @@ func (s *Storage) GetItem(ctx context.Context, Name string) (rawitem.Info, error
 		return nil, rawitem.ErrorItemNotFound
 	}
 
-	return i, nil
+	info := i
+
+	return &info, nil
 }
 
-func (s *Storage) AddItem(ctx context.Context, info rawitem.Info) error {
+// AddItem - добавляет предмет в Storage.
+func (s *Storage) AddItem(ctx context.Context, info *rawitem.Info) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	i, ok := s.items[info.Name]
+	_, ok := s.items[info.Name]
 	if ok {
 		return rawitem.ErrorItemAlreadyExists
 	}
 
-	s.items[info.Name] = r
+	s.items[info.Name] = *info
 
 	return nil
 }
 
-func (s *Storage) UpdateItem(ctx context.Context, info rawitem.Info) error {
+// UpdateItem - обновляет предмет в Storage.
+func (s *Storage) UpdateItem(ctx context.Context, info *rawitem.Info) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	i, ok := s.items[Name]
+	_, ok := s.items[info.Name]
 	if !ok {
 		return rawitem.ErrorItemNotFound
 	}
 
+	s.items[info.Name] = *info
+
 	return nil
 }
 
+// UpdateItem - удаляет предмет из Storage.
 func (s *Storage) DeleteItem(ctx context.Context, Name string) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	i, ok := s.items[Name]
+	_, ok := s.items[Name]
 	if !ok {
 		return rawitem.ErrorItemNotFound
 	}

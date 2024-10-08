@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/k0st1a/gophkeeper/internal/adapters/storage/inmemory"
 	grpc "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/client"
 
 	"github.com/gdamore/tcell/v2"
@@ -58,6 +59,7 @@ const (
 
 type client struct {
 	grpc  grpc.GrpcClient
+	storage inmemory.Storage
 	app   *tview.Application
 	pages *tview.Pages
 }
