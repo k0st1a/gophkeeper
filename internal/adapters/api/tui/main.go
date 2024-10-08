@@ -7,6 +7,7 @@ import (
 
 	grpc "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/client"
 	"github.com/k0st1a/gophkeeper/internal/adapters/storage/inmemory"
+	"github.com/k0st1a/gophkeeper/internal/pkg/client/model/item"
 	"github.com/k0st1a/gophkeeper/internal/pkg/client/model/password"
 	"github.com/k0st1a/gophkeeper/internal/ports"
 
@@ -26,6 +27,7 @@ const (
 	pageNameNotify = "notify"
 
 	pageNameUpdatePassword = "update password"
+	pageNameAddPassword    = "add password"
 
 	// Имена кнопок.
 	buttonNameCancel = "Cancel"
@@ -280,7 +282,9 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 
 	list := c.storage.ListItems(context.Background())
 
-	table := tview.NewTable().
+	table := tview.NewTable()
+
+	table.
 		SetBorders(true).
 		SetCell(0, columnName, tview.NewTableCell("Name")).
 		SetCell(0, columnType, tview.NewTableCell("Type")).
@@ -292,7 +296,8 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 		SetCell(0, columnDownloadTime, tview.NewTableCell("Download time")).
 		SetCell(0, columnID, tview.NewTableCell("Id"))
 
-	for row, item := range list {
+	for i, item := range list {
+		row := i + 1
 		table.
 			SetCell(row, columnName, tview.NewTableCell(item.Name)).
 			SetCell(row, columnType, tview.NewTableCell(item.Type)).
@@ -323,24 +328,16 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 		}
 	})
 
-	navigateButtons := tview.NewForm().
-		AddButton("Prev", func() {
-			c.ItemsPage(ctx, max(page_offset-page_size), page_size)
-		}).
+	table.
+		SetBorder(true).
+		SetBorderColor(tcell.ColorSteelBlue)
+
+	buttons := tview.NewForm().
 		AddButton("Refresh", func() {
-			c.ItemsPage(ctx, page_offset, page_size)
+			c.ItemsPage(ctx, 0, 0)
 		}).
-		AddButton("Next", func() {
-			c.ItemsPage(ctx, page_offset+page_size, page_size)
-		})
-
-	navigateButtons.
-		SetButtonsAlign(tview.AlignLeft).
-		SetBorderPadding(0, 0, 0, 0)
-
-	editButtons := tview.NewForm().
 		AddButton("Add password", func() {
-			//c.AddPassword(ctx)
+			c.AddPassword(ctx)
 		}).
 		AddButton("Add card", func() {
 			//c.AddCard(ctx)
@@ -352,17 +349,18 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 			//c.AddFile(ctx)
 		})
 
-	editButtons.
+	buttons.
 		SetButtonsAlign(tview.AlignLeft).
 		SetBorderPadding(0, 0, 0, 0)
 
 	flex := tview.NewFlex().
-		SetDirection(tview.FlexRow).
-		AddItem(editButtons, 1, 1, false).
 		AddItem(table, 0, 1, true).
-		AddItem(navigateButtons, 1, 1, false)
+		SetDirection(tview.FlexRow).
+		AddItem(buttons, 1, 1, false)
 
-	flex.SetBorder(true)
+	flex.
+		SetTitle("Items").
+		SetBorder(true)
 
 	c.pages.AddPage(pageNameItems, flex, true, true)
 }
@@ -401,7 +399,7 @@ func (c *client) ViewPassword(ctx context.Context, name string) {
 		AddButton(buttonNameUpdate, func() {
 			d, err := password.Serialize(p)
 			if err != nil {
-				log.Printf("Password serialize error:%w", err)
+				log.Printf("Password serialize error while update password:%w", err)
 				c.ErrorPage(err.Error())
 				return
 			}
@@ -412,7 +410,7 @@ func (c *client) ViewPassword(ctx context.Context, name string) {
 
 			err = c.storage.UpdateItem(ctx, i)
 			if err != nil {
-				log.Printf("item update error while update password:%w", err)
+				log.Printf("Item update error while update password:%w", err)
 				c.ErrorPage(err.Error())
 				return
 			}
@@ -433,4 +431,61 @@ func (c *client) ViewPassword(ctx context.Context, name string) {
 		AddItem(buttons, 1, 1, false)
 
 	c.pages.AddPage(pageNameUpdatePassword, flex, true, true)
+}
+
+func (c *client) AddPassword(ctx context.Context) {
+	i := item.New()
+	i.Type = ports.ItemTypePassword
+
+	p := &password.Password{}
+
+	form := tview.NewForm().
+		AddInputField(labelItemName, i.Name, defaultFieldWidth, nil, func(text string) {
+			i.Name = text
+		}).
+		AddInputField(labelItemDescription, i.Description, defaultFieldWidth, nil, func(text string) {
+			i.Description = text
+		}).
+		AddInputField(labelUserName, p.UserName, defaultFieldWidth, nil, func(text string) {
+			p.UserName = text
+		}).
+		AddInputField(labelPassword, p.Password, defaultFieldWidth, nil, func(text string) {
+			p.Password = text
+		}).
+		AddButton(buttonNameOk, func() {
+			d, err := password.Serialize(p)
+			if err != nil {
+				log.Printf("Password serialize error while add password:%w", err)
+				c.ErrorPage(err.Error())
+				return
+			}
+
+			log.Printf("Password serialized")
+
+			i.Data = d
+
+			err = c.storage.AddItem(ctx, i)
+			if err != nil {
+				log.Printf("Item add error while add password:%w", err)
+				c.ErrorPage(err.Error())
+				return
+			}
+
+			c.pages.RemovePage(pageNameAddPassword)
+		}).
+		AddButton(buttonNameCancel, func() {
+			c.pages.RemovePage(pageNameAddPassword)
+		})
+		//SetButtonsAlign(tview.AlignLeft).
+		//SetBorderPadding(0, 0, 0, 0)
+
+	form.
+		SetTitle("Add password").
+		SetTitleAlign(tview.AlignLeft)
+
+	flex := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(form, 0, 1, true)
+
+	c.pages.AddPage(pageNameAddPassword, flex, true, true)
 }

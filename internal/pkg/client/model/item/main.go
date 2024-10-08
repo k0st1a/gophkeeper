@@ -35,6 +35,15 @@ type Info struct {
 	DownloadTime time.Time
 }
 
+func New() *Info {
+	now := time.Now()
+
+	return &Info{
+		CreateTime: now,
+		UpdateTime: now,
+	}
+}
+
 // Map2List  - преобразование из map в list.
 func Map2List(m map[string]Info) []Info {
 	l := make([]Info, len(m))
