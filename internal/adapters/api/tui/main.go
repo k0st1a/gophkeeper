@@ -7,6 +7,7 @@ import (
 
 	grpc "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/client"
 	"github.com/k0st1a/gophkeeper/internal/adapters/storage/inmemory"
+	"github.com/k0st1a/gophkeeper/internal/pkg/client/model/password"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
