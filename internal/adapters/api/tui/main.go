@@ -98,7 +98,7 @@ func (c *client) Shutdown() error {
 func (c *client) WelcomePage() {
 	log.Printf("Invoked Welcome Page")
 
-	welcomeList := tview.NewList().
+	list := tview.NewList().
 		ShowSecondaryText(false).
 		AddItem("Login", "", '1', func() {
 			c.pages.RemovePage(pageNameWelcome)
@@ -112,16 +112,16 @@ func (c *client) WelcomePage() {
 			c.app.Stop()
 		})
 
-	welcomeList.
+	list.
 		SetTitle("Welcome").
 		SetBorder(true).
 		SetBorderColor(tcell.ColorSteelBlue)
 
-	welcomeFlexBox := tview.NewFlex().
+	flex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
-		AddItem(welcomeList, 0, 1, true)
+		AddItem(list, 0, 1, true)
 
-	c.pages.AddPage(pageNameWelcome, welcomeFlexBox, true, true)
+	c.pages.AddPage(pageNameWelcome, flex, true, true)
 }
 
 func (c *client) ErrorPage(text string) {
@@ -318,7 +318,7 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 
 		switch itemType {
 		case string(ports.ItemTypePassword):
-			c.ViewPassword(ctx, itemName)
+			c.ViewPasswordPage(ctx, itemName)
 		case string(ports.ItemTypeCard):
 			//c.ViewCard(ctx, itemName)
 		case string(ports.ItemTypeNote):
@@ -337,7 +337,7 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 			c.ItemsPage(ctx, 0, 0)
 		}).
 		AddButton("Add password", func() {
-			c.AddPassword(ctx)
+			c.AddPasswordPage(ctx)
 		}).
 		AddButton("Add card", func() {
 			//c.AddCard(ctx)
@@ -354,9 +354,9 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 		SetBorderPadding(0, 0, 0, 0)
 
 	flex := tview.NewFlex().
-		AddItem(table, 0, 1, true).
-		SetDirection(tview.FlexRow).
-		AddItem(buttons, 1, 1, false)
+		AddItem(buttons, 0, 1, false).
+		AddItem(table, 1, 1, true).
+		SetDirection(tview.FlexRow)
 
 	flex.
 		SetTitle("Items").
@@ -365,7 +365,7 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 	c.pages.AddPage(pageNameItems, flex, true, true)
 }
 
-func (c *client) ViewPassword(ctx context.Context, name string) {
+func (c *client) ViewPasswordPage(ctx context.Context, name string) {
 	i, err := c.storage.GetItem(ctx, name)
 	if err != nil {
 		c.ErrorPage(err.Error())
@@ -433,7 +433,7 @@ func (c *client) ViewPassword(ctx context.Context, name string) {
 	c.pages.AddPage(pageNameUpdatePassword, flex, true, true)
 }
 
-func (c *client) AddPassword(ctx context.Context) {
+func (c *client) AddPasswordPage(ctx context.Context) {
 	i := item.New()
 	i.Type = ports.ItemTypePassword
 
