@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	grpc "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/client"
 	"github.com/k0st1a/gophkeeper/internal/adapters/storage/inmemory"
@@ -282,10 +283,9 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 
 	list := c.storage.ListItems(context.Background())
 
-	table := tview.NewTable()
-
-	table.
+	table := tview.NewTable().
 		SetBorders(true).
+		SetSelectable(true, false).
 		SetCell(0, columnName, tview.NewTableCell("Name")).
 		SetCell(0, columnType, tview.NewTableCell("Type")).
 		SetCell(0, columnDescription, tview.NewTableCell("Description")).
@@ -302,15 +302,13 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 			SetCell(row, columnName, tview.NewTableCell(item.Name)).
 			SetCell(row, columnType, tview.NewTableCell(item.Type)).
 			SetCell(row, columnDescription, tview.NewTableCell(item.Description)).
-			SetCell(row, columnCreateTime, tview.NewTableCell(item.CreateTime.String())).
-			SetCell(row, columnUpdateTime, tview.NewTableCell(item.UpdateTime.String())).
+			SetCell(row, columnCreateTime, newTableCellTime(item.CreateTime)).
+			SetCell(row, columnUpdateTime, newTableCellTime(item.UpdateTime)).
 			SetCell(row, columnMarkDelete, tview.NewTableCell(strconv.FormatBool(item.MarkDelete))).
-			SetCell(row, columnUploadTime, tview.NewTableCell(item.UploadTime.String())).
-			SetCell(row, columnDownloadTime, tview.NewTableCell(item.DownloadTime.String())).
+			SetCell(row, columnUploadTime, newTableCellTime(item.UploadTime)).
+			SetCell(row, columnDownloadTime, newTableCellTime(item.DownloadTime)).
 			SetCell(row, columnID, tview.NewTableCell(item.ID))
 	}
-
-	table.SetSelectable(true, false)
 
 	table.SetSelectedFunc(func(row, column int) {
 		itemName := table.GetCell(row, columnName).Text
@@ -354,9 +352,12 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 		SetBorderPadding(0, 0, 0, 0)
 
 	flex := tview.NewFlex().
-		AddItem(table, 0, 1, true).
 		SetDirection(tview.FlexRow).
-		AddItem(buttons, 1, 1, false)
+		AddItem(
+			tview.NewFlex().
+				AddItem(buttons, 1, 0, false).
+				AddItem(table, 0, 1, true).
+				SetDirection(tview.FlexRow), 0, 1, false)
 
 	flex.
 		SetTitle("Items").
@@ -488,4 +489,14 @@ func (c *client) AddPasswordPage(ctx context.Context) {
 		AddItem(form, 0, 1, true)
 
 	c.pages.AddPage(pageNameAddPassword, flex, true, true)
+}
+
+func newTableCellTime(t time.Time) *tview.TableCell {
+	nt := time.Time{}
+
+	if t == nt {
+		return tview.NewTableCell("")
+	}
+
+	return tview.NewTableCell(t.Format(time.RFC3339))
 }
