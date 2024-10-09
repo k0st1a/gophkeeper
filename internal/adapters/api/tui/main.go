@@ -336,9 +336,6 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 		SetBorderColor(tcell.ColorSteelBlue)
 
 	buttons := tview.NewForm().
-		AddButton("Refresh", func() {
-			c.ItemsPage(ctx, 0, 0)
-		}).
 		AddButton("Add password", func() {
 			c.AddPasswordPage(ctx)
 		}).
@@ -350,7 +347,22 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 		}).
 		AddButton("Add file", func() {
 			//c.AddFile(ctx)
+		}).
+		AddButton("Refresh", func() {
+			c.ItemsPage(ctx, 0, 0)
 		})
+
+	buttons.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyTab:
+			c.app.SetFocus(table)
+		case tcell.KeyRight:
+			return tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone)
+		case tcell.KeyLeft:
+			return tcell.NewEventKey(tcell.KeyBacktab, 0, tcell.ModNone)
+		}
+		return event
+	})
 
 	buttons.
 		SetButtonsAlign(tview.AlignLeft).
@@ -366,6 +378,10 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 	flex.
 		SetTitle("Items page").
 		SetBorder(true)
+
+	table.SetDoneFunc(func(key tcell.Key) {
+		c.app.SetFocus(buttons)
+	})
 
 	c.pages.AddPage(pageNameItems, flex, true, true)
 }
