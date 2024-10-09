@@ -98,7 +98,7 @@ func (c *client) Shutdown() error {
 func (c *client) WelcomePage() {
 	log.Printf("Invoked Welcome Page")
 
-	list := tview.NewList().
+	welcomeList := tview.NewList().
 		ShowSecondaryText(false).
 		AddItem("Login", "", '1', func() {
 			c.pages.RemovePage(pageNameWelcome)
@@ -112,16 +112,16 @@ func (c *client) WelcomePage() {
 			c.app.Stop()
 		})
 
-	list.
+	welcomeList.
 		SetTitle("Welcome").
 		SetBorder(true).
 		SetBorderColor(tcell.ColorSteelBlue)
 
-	flex := tview.NewFlex().
+	welcomeFlexBox := tview.NewFlex().
 		SetDirection(tview.FlexRow).
-		AddItem(list, 0, 1, true)
+		AddItem(welcomeList, 0, 1, true)
 
-	c.pages.AddPage(pageNameWelcome, flex, true, true)
+	c.pages.AddPage(pageNameWelcome, welcomeFlexBox, true, true)
 }
 
 func (c *client) ErrorPage(text string) {
@@ -354,9 +354,9 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 		SetBorderPadding(0, 0, 0, 0)
 
 	flex := tview.NewFlex().
-		AddItem(buttons, 0, 1, false).
-		AddItem(table, 1, 1, true).
-		SetDirection(tview.FlexRow)
+		AddItem(table, 0, 1, true).
+		SetDirection(tview.FlexRow).
+		AddItem(buttons, 1, 1, false)
 
 	flex.
 		SetTitle("Items").
