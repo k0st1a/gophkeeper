@@ -50,15 +50,15 @@ const (
 )
 
 const (
-	columnName = iota
+	columnID = iota
+	columnName
 	columnType
 	columnDescription
+	columnMarkDelete
 	columnCreateTime
 	columnUpdateTime
-	columnMarkDelete
 	columnUploadTime
 	columnDownloadTime
-	columnID
 )
 
 type client struct {
@@ -257,6 +257,8 @@ func (c *client) LoginPage() {
 
 			c.NotifyAndSwitch2Page("Success login",
 				func() {
+					c.pages.RemovePage(pageNameLogin)
+					c.addTempPasswords()
 					c.ItemsPage(context.Background(), 0, 20)
 				})
 			log.Printf("Success login fast")
@@ -284,30 +286,33 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 	list := c.storage.ListItems(context.Background())
 
 	table := tview.NewTable().
-		SetBorders(true).
+		SetFixed(1, 1).
 		SetSelectable(true, false).
-		SetCell(0, columnName, tview.NewTableCell("Name")).
-		SetCell(0, columnType, tview.NewTableCell("Type")).
-		SetCell(0, columnDescription, tview.NewTableCell("Description")).
-		SetCell(0, columnCreateTime, tview.NewTableCell("Create time")).
-		SetCell(0, columnUpdateTime, tview.NewTableCell("Update time")).
-		SetCell(0, columnMarkDelete, tview.NewTableCell("Marked for delete?")).
-		SetCell(0, columnUploadTime, tview.NewTableCell("Upload time")).
-		SetCell(0, columnDownloadTime, tview.NewTableCell("Download time")).
-		SetCell(0, columnID, tview.NewTableCell("Id"))
+		SetSeparator(' ').
+		SetCell(0, columnID, tview.NewTableCell("Id").SetSelectable(false).SetTextColor(tcell.ColorYellow)).
+		SetCell(0, columnName, tview.NewTableCell("Name").SetSelectable(false).SetTextColor(tcell.ColorYellow)).
+		SetCell(0, columnType, tview.NewTableCell("Type").SetSelectable(false).SetTextColor(tcell.ColorYellow)).
+		SetCell(0, columnDescription, tview.NewTableCell("Description").SetSelectable(false).SetTextColor(tcell.ColorYellow)).
+		SetCell(0, columnMarkDelete, tview.NewTableCell("Marked for delete?").SetSelectable(false).SetTextColor(tcell.ColorYellow)).
+		SetCell(0, columnCreateTime, tview.NewTableCell("Create time").SetSelectable(false).SetTextColor(tcell.ColorYellow)).
+		SetCell(0, columnUpdateTime, tview.NewTableCell("Update time").SetSelectable(false).SetTextColor(tcell.ColorYellow)).
+		SetCell(0, columnUploadTime, tview.NewTableCell("Upload time").SetSelectable(false).SetTextColor(tcell.ColorYellow)).
+		SetCell(0, columnDownloadTime, tview.NewTableCell("Download time").SetSelectable(false).SetTextColor(tcell.ColorYellow))
+
+	table.SetBorder(true).SetTitle("Table")
 
 	for i, item := range list {
 		row := i + 1
 		table.
-			SetCell(row, columnName, tview.NewTableCell(item.Name)).
-			SetCell(row, columnType, tview.NewTableCell(item.Type)).
-			SetCell(row, columnDescription, tview.NewTableCell(item.Description)).
-			SetCell(row, columnCreateTime, newTableCellTime(item.CreateTime)).
-			SetCell(row, columnUpdateTime, newTableCellTime(item.UpdateTime)).
-			SetCell(row, columnMarkDelete, tview.NewTableCell(strconv.FormatBool(item.MarkDelete))).
-			SetCell(row, columnUploadTime, newTableCellTime(item.UploadTime)).
-			SetCell(row, columnDownloadTime, newTableCellTime(item.DownloadTime)).
-			SetCell(row, columnID, tview.NewTableCell(item.ID))
+			SetCell(row, columnID, tview.NewTableCell(item.ID).SetSelectable(false).SetTextColor(tcell.ColorDarkCyan)).
+			SetCell(row, columnName, tview.NewTableCell(item.Name).SetTextColor(tcell.ColorWhite)).
+			SetCell(row, columnType, tview.NewTableCell(item.Type).SetTextColor(tcell.ColorWhite)).
+			SetCell(row, columnDescription, tview.NewTableCell(item.Description).SetTextColor(tcell.ColorWhite)).
+			SetCell(row, columnMarkDelete, tview.NewTableCell(strconv.FormatBool(item.MarkDelete)).SetTextColor(tcell.ColorWhite).SetAlign(tview.AlignRight)).
+			SetCell(row, columnUploadTime, newTableCellTime(item.UploadTime).SetSelectable(false)).
+			SetCell(row, columnCreateTime, newTableCellTime(item.CreateTime).SetSelectable(false)).
+			SetCell(row, columnUpdateTime, newTableCellTime(item.UpdateTime).SetSelectable(false)).
+			SetCell(row, columnDownloadTime, newTableCellTime(item.DownloadTime).SetSelectable(false))
 	}
 
 	table.SetSelectedFunc(func(row, column int) {
@@ -316,7 +321,7 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 
 		switch itemType {
 		case string(ports.ItemTypePassword):
-			c.ViewPasswordPage(ctx, itemName)
+			c.UpdatePasswordPage(ctx, itemName)
 		case string(ports.ItemTypeCard):
 			//c.ViewCard(ctx, itemName)
 		case string(ports.ItemTypeNote):
@@ -352,21 +357,20 @@ func (c *client) ItemsPage(ctx context.Context, page_offset, page_size int32) {
 		SetBorderPadding(0, 0, 0, 0)
 
 	flex := tview.NewFlex().
-		SetDirection(tview.FlexRow).
 		AddItem(
 			tview.NewFlex().
-				AddItem(buttons, 1, 0, false).
+				AddItem(buttons, 1, 1, false).
 				AddItem(table, 0, 1, true).
-				SetDirection(tview.FlexRow), 0, 1, false)
+				SetDirection(tview.FlexRow), 0, 1, true)
 
 	flex.
-		SetTitle("Items").
+		SetTitle("Items page").
 		SetBorder(true)
 
 	c.pages.AddPage(pageNameItems, flex, true, true)
 }
 
-func (c *client) ViewPasswordPage(ctx context.Context, name string) {
+func (c *client) UpdatePasswordPage(ctx context.Context, name string) {
 	i, err := c.storage.GetItem(ctx, name)
 	if err != nil {
 		c.ErrorPage(err.Error())
@@ -390,13 +394,7 @@ func (c *client) ViewPasswordPage(ctx context.Context, name string) {
 		}).
 		AddInputField(labelPassword, p.Password, defaultFieldWidth, nil, func(text string) {
 			p.Password = text
-		})
-
-	form.
-		SetTitle("Update password").
-		SetTitleAlign(tview.AlignLeft)
-
-	buttons := tview.NewForm().
+		}).
 		AddButton(buttonNameUpdate, func() {
 			d, err := password.Serialize(p)
 			if err != nil {
@@ -422,14 +420,14 @@ func (c *client) ViewPasswordPage(ctx context.Context, name string) {
 			c.pages.RemovePage(pageNameUpdatePassword)
 		})
 
-	buttons.
-		SetButtonsAlign(tview.AlignLeft).
-		SetBorderPadding(0, 0, 0, 0)
+	form.
+		SetTitle("Update password").
+		SetBorder(true).
+		SetBorderColor(tcell.ColorSteelBlue)
 
 	flex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
-		AddItem(form, 0, 1, true).
-		AddItem(buttons, 1, 1, false)
+		AddItem(form, 0, 1, true)
 
 	c.pages.AddPage(pageNameUpdatePassword, flex, true, true)
 }
@@ -473,6 +471,7 @@ func (c *client) AddPasswordPage(ctx context.Context) {
 			}
 
 			c.pages.RemovePage(pageNameAddPassword)
+			c.ItemsPage(ctx, 0, 0)
 		}).
 		AddButton(buttonNameCancel, func() {
 			c.pages.RemovePage(pageNameAddPassword)
@@ -491,6 +490,41 @@ func (c *client) AddPasswordPage(ctx context.Context) {
 	c.pages.AddPage(pageNameAddPassword, flex, true, true)
 }
 
+func (c *client) addTempPasswords() {
+	i := item.New()
+	i.Type = ports.ItemTypePassword
+	i.Name = "Name 1"
+	i.Description = "Description 1"
+
+	p := &password.Password{UserName: "UserName 1", Password: "Password 2"}
+	d, _ := password.Serialize(p)
+	i.Data = d
+
+	_ = c.storage.AddItem(context.Background(), i)
+
+	i = item.New()
+	i.Type = ports.ItemTypePassword
+	i.Name = "Name 2"
+	i.Description = "Description 2"
+
+	p = &password.Password{UserName: "UserName 2", Password: "Password 3"}
+	d, _ = password.Serialize(p)
+	i.Data = d
+
+	_ = c.storage.AddItem(context.Background(), i)
+
+	i = item.New()
+	i.Type = ports.ItemTypePassword
+	i.Name = "Name 3"
+	i.Description = "Description 3"
+
+	p = &password.Password{UserName: "UserName 3", Password: "Password 4"}
+	d, _ = password.Serialize(p)
+	i.Data = d
+
+	_ = c.storage.AddItem(context.Background(), i)
+}
+
 func newTableCellTime(t time.Time) *tview.TableCell {
 	nt := time.Time{}
 
@@ -498,5 +532,5 @@ func newTableCellTime(t time.Time) *tview.TableCell {
 		return tview.NewTableCell("")
 	}
 
-	return tview.NewTableCell(t.Format(time.RFC3339))
+	return tview.NewTableCell(t.Format(time.RFC3339)).SetTextColor(tcell.ColorWhite)
 }

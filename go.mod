@@ -6,6 +6,7 @@ require (
 	github.com/gdamore/tcell/v2 v2.7.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-migrate/migrate/v4 v4.17.1
+	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.21.0
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/mailru/easyjson v0.7.7

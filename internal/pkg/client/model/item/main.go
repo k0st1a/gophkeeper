@@ -3,6 +3,8 @@ package item
 import (
 	"errors"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -39,6 +41,7 @@ func New() *Info {
 	now := time.Now()
 
 	return &Info{
+		ID:         uuid.NewString(),
 		CreateTime: now,
 		UpdateTime: now,
 	}
