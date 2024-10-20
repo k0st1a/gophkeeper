@@ -238,11 +238,11 @@ func (s *sync) deleteBothItems(ctx context.Context, r *gclient.Item, l *pclient.
 
 // compare - сравить локальный и удаленный предметы.
 //
-//		Возвращает: 
-//			0, если предметы одинаковы
-//	        1, если нужно обновить локальный предмет
-//		    2, если нужно обновить удаленный предмет
-//	        3, если нужно удалить  локальный и удаленный предметы
+//	Возвращает:
+//		0, если предметы одинаковы
+//		1, если нужно обновить локальный предмет
+//		2, если нужно обновить удаленный предмет
+//		3, если нужно удалить  локальный и удаленный предметы
 func compare(l *pclient.Item, r *gclient.Item) int {
 	log.Printf("Compare items, l.UpdateTime:%v, r.UpdateTime:%v", l.UpdateTime, r.UpdateTime)
 	ld := l.UpdateTime.UnixMilli()
