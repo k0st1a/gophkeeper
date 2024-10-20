@@ -47,7 +47,8 @@ easyjson-install:
 ## TODO: Версии пакетов должны быть одни и теже в рамках Makefile.
 
 GO_PATH := $(shell go env GOPATH)
-PROTOBUF_PATH := "./proto"
+PROTOBUF_PATH := "./proto/v1"
+PROTOBUF_GEN_PATH := "./internal/adapters/api/grpc/gen/proto/v1"
 
 .PHONY:protobuf-generate
 protobuf-generate:
@@ -60,14 +61,14 @@ protobuf-generate:
 		--grpc-gateway_opt=Mitems.proto=. \
 		--grpc-gateway_opt=Musers.proto=. \
 		--grpc-gateway_opt=paths=source_relative \
-		--grpc-gateway_out=./internal/adapters/api/grpc/gen/proto \
+		--grpc-gateway_out=${PROTOBUF_GEN_PATH} \
 		--go_opt=Mitems.proto=. \
 		--go_opt=Musers.proto=. \
 		--go_opt=paths=source_relative \
-		--go_out=./internal/adapters/api/grpc/gen/proto \
+		--go_out=${PROTOBUF_GEN_PATH} \
 		--go-grpc_opt=Mitems.proto=. \
 		--go-grpc_opt=Musers.proto=. \
-		--go-grpc_out=./internal/adapters/api/grpc/gen/proto \
+		--go-grpc_out=${PROTOBUF_GEN_PATH} \
 		--go-grpc_opt=paths=source_relative \
 		items.proto \
 		users.proto
@@ -102,16 +103,6 @@ openapi2-generate: openapi2-install
 		--openapiv2_out=./third_party/OpenAPI \
 		items.proto \
 		users.proto
-
-##--------------------------------------------------------------------
-## SWAGGER UI GENERATE
-##--------------------------------------------------------------------
-SWAGGER_UI_VERSION = v4.15.5
-.PHONY:swagger-ui-generate
-swagger-ui-generate: openapi2-generate
-	chmod +x ./scripts/generate-swagger-ui.sh && \
-	SWAGGER_UI_VERSION=$(SWAGGER_UI_VERSION) \
-		./scripts/generate-swagger-ui.sh
 
 ##--------------------------------------------------------------------
 ## BUILD, TESTS, RUN
@@ -172,6 +163,14 @@ client-run-with-args:
 	./cmd/client/client \
 		-log-level debug \
 		-log-file client.log \
+		-address ${GK_HOST}:${GK_PORT}
+
+.PHONY:client-run-with-args-2
+client-run-with-args-2:
+	chmod +x ./cmd/client/client && \
+	./cmd/client/client \
+		-log-level debug \
+		-log-file client2.log \
 		-address ${GK_HOST}:${GK_PORT}
 ##--------------------------------------------------------------------
 ## DB POSTGRESQL
