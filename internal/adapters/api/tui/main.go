@@ -437,7 +437,7 @@ func (c *client) UpdatePasswordPage(ctx context.Context, i *storage.Item, p *sto
 		AddButton(buttonNameUpdate, func() {
 			err := c.storage.UpdateItem(ctx, i)
 			if err != nil {
-				log.Printf("Item update error while update password:%w", err)
+				log.Error().Err(err).Msg("Item update error while update password")
 				c.NotifyPage(err.Error())
 				return
 			}
@@ -478,7 +478,7 @@ func (c *client) AddPasswordPage(ctx context.Context) {
 		AddButton(buttonNameOk, func() {
 			_, err := c.storage.CreateItem(ctx, p)
 			if err != nil {
-				log.Printf("Item add error while add password:%w", err)
+				log.Error().Err(err).Msg("Item add error while add password")
 				c.NotifyPage(err.Error())
 				return
 			}
@@ -517,7 +517,7 @@ func (c *client) UpdateCardPage(ctx context.Context, i *storage.Item, cd *storag
 		AddButton(buttonNameUpdate, func() {
 			err := c.storage.UpdateItem(ctx, i)
 			if err != nil {
-				log.Printf("Item update error while update card:%w", err)
+				log.Error().Err(err).Msg("Item update error while update card")
 				c.NotifyPage(err.Error())
 				return
 			}
@@ -558,7 +558,7 @@ func (c *client) AddCardPage(ctx context.Context) {
 		AddButton(buttonNameOk, func() {
 			_, err := c.storage.CreateItem(ctx, cd)
 			if err != nil {
-				log.Printf("Item add error while add card:%w", err)
+				log.Error().Err(err).Msg("Item add error while add card")
 				c.NotifyPage(err.Error())
 				return
 			}
@@ -595,7 +595,7 @@ func (c *client) UpdateNotePage(ctx context.Context, i *storage.Item, n *storage
 		AddButton(buttonNameUpdate, func() {
 			err := c.storage.UpdateItem(ctx, i)
 			if err != nil {
-				log.Printf("Item update error while update note:%w", err)
+				log.Error().Err(err).Msg("Item update error while update note")
 				c.NotifyPage(err.Error())
 				return
 			}
@@ -633,7 +633,7 @@ func (c *client) AddNotePage(ctx context.Context) {
 		AddButton(buttonNameOk, func() {
 			_, err := c.storage.CreateItem(ctx, n)
 			if err != nil {
-				log.Printf("Item add error while add note:%w", err)
+				log.Error().Err(err).Msg("Item add error while add note")
 				c.NotifyPage(err.Error())
 				return
 			}
@@ -729,7 +729,7 @@ func (c *client) AddFilePage(ctx context.Context) {
 
 			_, err = c.storage.CreateItem(ctx, f)
 			if err != nil {
-				log.Printf("Item add error while add file:%w", err)
+				log.Error().Err(err).Msg("Item add error while add file")
 				c.NotifyPage(err.Error())
 				return
 			}

@@ -65,8 +65,8 @@ func (c *client) UpdateItem(ctx context.Context, i *Item) error {
 
 	mi, err := createStorageItemBody(i.Body)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("Error of create storage item(%v) body", i.Id)
-		return fmt.Errorf("Error of create storage item(%v) body:%w", i.Id, err)
+		log.Ctx(ctx).Error().Err(err).Msgf("error of create storage item(%v) body", i.Id)
+		return fmt.Errorf("error of create storage item(%v) body:%w", i.Id, err)
 	}
 
 	ut := time.Now()
@@ -79,8 +79,8 @@ func (c *client) UpdateItem(ctx context.Context, i *Item) error {
 
 	err = c.storage.UpdateItem(ctx, ui)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("Error of update storage item(%v)", i.Id)
-		return fmt.Errorf("Error of update storage item(%v):%w", i.Id, err)
+		log.Ctx(ctx).Error().Err(err).Msgf("error of update storage item(%v)", i.Id)
+		return fmt.Errorf("error of update storage item(%v):%w", i.Id, err)
 	}
 
 	log.Ctx(ctx).Printf("Item(%v) updated", i.Id)
@@ -92,8 +92,8 @@ func (c *client) GetItem(ctx context.Context, id string) (*Item, error) {
 
 	si, err := c.storage.GetItem(ctx, id)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("Error of get storage item(%v)", id)
-		return nil, fmt.Errorf("Error of get item(%v):%w", id, err)
+		log.Ctx(ctx).Error().Err(err).Msgf("error of get storage item(%v)", id)
+		return nil, fmt.Errorf("error of get item(%v):%w", id, err)
 	}
 
 	if si.DeleteMark {
@@ -102,8 +102,8 @@ func (c *client) GetItem(ctx context.Context, id string) (*Item, error) {
 
 	b, err := createItemBody(&si.Body)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("Error of create item(%v) body", id)
-		return nil, fmt.Errorf("Error of create item(%v) body:%w", id, err)
+		log.Ctx(ctx).Error().Err(err).Msgf("error of create item(%v) body", id)
+		return nil, fmt.Errorf("error of create item(%v) body:%w", id, err)
 	}
 
 	i := &Item{
@@ -122,8 +122,8 @@ func (c *client) ListItems(ctx context.Context) ([]Item, error) {
 
 	sl, err := c.storage.ListItems(ctx)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Error of list items")
-		return nil, fmt.Errorf("Error of list items:%w", err)
+		log.Ctx(ctx).Error().Err(err).Msg("error of list items")
+		return nil, fmt.Errorf("error of list items:%w", err)
 	}
 
 	l := make([]Item, 0, len(sl))
@@ -167,8 +167,8 @@ func (c *client) DeleteItem(ctx context.Context, id string) error {
 
 	err := c.storage.UpdateItem(ctx, &ui)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("Error of update item(%v) while mark to delete", id)
-		return fmt.Errorf("Error of get item(%v):%w", id, err)
+		log.Ctx(ctx).Error().Err(err).Msgf("error of update item(%v) while mark to delete", id)
+		return fmt.Errorf("error of get item(%v):%w", id, err)
 	}
 
 	log.Ctx(ctx).Printf("Item(%v) mark to delete", id)
@@ -203,7 +203,7 @@ func createStorageItemBody(body any) (*model.Item, error) {
 			Body:        b.Body,
 		}
 	default:
-		return nil, fmt.Errorf("Unkown item body type:%v", reflect.TypeOf(b))
+		return nil, fmt.Errorf("unkown item body type:%v", reflect.TypeOf(b))
 	}
 
 	return &mi, nil
@@ -242,7 +242,7 @@ func createItemBody(mi *model.Item) (any, error) {
 			Body:        b.Body,
 		}
 	default:
-		return nil, fmt.Errorf("Unkown storage item body:%v", reflect.TypeOf(b))
+		return nil, fmt.Errorf("unkown storage item body:%v", reflect.TypeOf(b))
 	}
 
 	return ib, nil

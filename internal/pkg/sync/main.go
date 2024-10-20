@@ -34,8 +34,8 @@ func (s *sync) Do(ctx context.Context) error {
 	// local itmes
 	litems, err := s.local.ListItems(ctx)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Error of list local items")
-		return fmt.Errorf("Error of list local items", err)
+		log.Ctx(ctx).Error().Err(err).Msg("error of list local items")
+		return fmt.Errorf("error of list local items:%w", err)
 	}
 	log.Printf("litems size:%v", len(litems))
 
@@ -50,7 +50,7 @@ func (s *sync) Do(ctx context.Context) error {
 			log.Ctx(ctx).Printf("Delete local item(%v)", i.ID)
 			err := s.local.DeleteItem(ctx, i.ID)
 			if err != nil {
-				log.Ctx(ctx).Error().Err(err).Msgf("Error of delete local item(%v)", i.ID)
+				log.Ctx(ctx).Error().Err(err).Msgf("error of delete local item(%v)", i.ID)
 			}
 			log.Ctx(ctx).Printf("Local item(%v) deleted", i.ID)
 			continue
@@ -71,8 +71,8 @@ func (s *sync) Do(ctx context.Context) error {
 	// remote items
 	ritems, err := s.remote.ListItems(ctx)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Error of list remote items")
-		return fmt.Errorf("Error of list remote items:%w", err)
+		log.Ctx(ctx).Error().Err(err).Msg("error of list remote items")
+		return fmt.Errorf("error of list remote items:%w", err)
 	}
 	log.Printf("ritems size:%v", len(ritems))
 
@@ -152,7 +152,7 @@ func (s *sync) uploadItem(ctx context.Context, l *pclient.Item) error {
 
 	id, err := s.remote.CreateItem(ctx, r)
 	if err != nil {
-		return fmt.Errorf("Error of upload local item(%v):%w", l.ID, err)
+		return fmt.Errorf("error of upload local item(%v):%w", l.ID, err)
 	}
 	log.Ctx(ctx).Printf("Local item(%v) uploaded, remote id:%v", l.ID, id)
 
@@ -163,7 +163,7 @@ func (s *sync) uploadItem(ctx context.Context, l *pclient.Item) error {
 
 	err = s.local.UpdateItem(ctx, ui)
 	if err != nil {
-		return fmt.Errorf("Error of update local item(%v)", l.ID, err)
+		return fmt.Errorf("error of update local item(%v):%w", l.ID, err)
 	}
 	log.Ctx(ctx).Printf("Local item(%v) updated", l.ID)
 
@@ -178,7 +178,7 @@ func (s *sync) downloadItem(ctx context.Context, r *gclient.Item) error {
 
 	id, err := s.local.CreateItem(ctx, l)
 	if err != nil {
-		return fmt.Errorf("Error of create local item(remote id:%v):%w", r.ID, err)
+		return fmt.Errorf("error of create local item(remote id:%v):%w", r.ID, err)
 	}
 	log.Ctx(ctx).Printf("Remote item(%v) downloaded, local id:%v", r.ID, id)
 
@@ -197,7 +197,7 @@ func (s *sync) updateLocalItem(ctx context.Context, l *pclient.Item, r *gclient.
 
 	err := s.local.UpdateItem(ctx, ui)
 	if err != nil {
-		return fmt.Errorf("Error of update local item(%v):%w", l.ID, err)
+		return fmt.Errorf("error of update local item(%v):%w", l.ID, err)
 	}
 	log.Ctx(ctx).Printf("Local item(%v) updated", l.ID)
 
@@ -211,7 +211,7 @@ func (s *sync) updateRemoteItem(ctx context.Context, r *gclient.Item, l *pclient
 
 	err := s.remote.UpdateItem(ctx, r)
 	if err != nil {
-		return fmt.Errorf("Error of update remote item(%v)", r.ID)
+		return fmt.Errorf("error of update remote item(%v)", r.ID)
 	}
 	log.Ctx(ctx).Printf("Remote item(%v) updated", r.ID)
 
@@ -223,13 +223,13 @@ func (s *sync) deleteBothItems(ctx context.Context, r *gclient.Item, l *pclient.
 
 	err := s.remote.DeleteItem(ctx, r.ID)
 	if err != nil {
-		return fmt.Errorf("Error of delete remote item(%v) => skip delete local item(%v)", r.ID, l.ID)
+		return fmt.Errorf("error of delete remote item(%v) => skip delete local item(%v)", r.ID, l.ID)
 	}
 	log.Printf("Remote item(%v) deleted", r.ID)
 
 	err = s.local.DeleteItem(ctx, l.ID)
 	if err != nil {
-		return fmt.Errorf("Error of delete local(%v) => wiil be delete in next sync", l.ID)
+		return fmt.Errorf("error of delete local(%v) => wiil be delete in next sync", l.ID)
 	}
 	log.Printf("Local item(%v) deleted", l.ID)
 
