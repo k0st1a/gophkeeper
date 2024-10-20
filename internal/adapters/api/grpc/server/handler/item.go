@@ -6,10 +6,11 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
-	pb "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/gen/proto"
+	pb "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/gen/proto/v1"
 	"github.com/k0st1a/gophkeeper/internal/pkg/userid"
-	"github.com/k0st1a/gophkeeper/internal/ports"
+	"github.com/k0st1a/gophkeeper/internal/ports/server"
 	"github.com/rs/zerolog/log"
 )
 
@@ -17,11 +18,11 @@ type ItemServer struct {
 	// нужно встраивать тип auth.Unimplemented<TypeName>
 	// для совместимости с будущими версиями
 	pb.UnimplementedItemsServiceServer
-	Storage ports.ItemStorage // YAGNI - без промежуточного сервиса логики над item.
+	Storage server.ItemStorage // YAGNI - без промежуточного сервиса логики над item.
 }
 
-func (s *ItemServer) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateResponse, error) {
-	log.Ctx(ctx).Printf("Create item, Name:%v, Type:%v", req.Item.Name, req.Item.Type)
+func (s *ItemServer) CreateItem(ctx context.Context, req *pb.CreateItemRequest) (*pb.CreateItemResponse, error) {
+	log.Ctx(ctx).Printf("Create item, CreateTime:%v", req.Item.CreateTime)
 
 	userID, ok := userid.Get(ctx)
 	if !ok {
@@ -29,13 +30,18 @@ func (s *ItemServer) Create(ctx context.Context, req *pb.CreateRequest) (*pb.Cre
 		return nil, status.Errorf(codes.Unauthenticated, "no user id")
 	}
 
-	id, err := s.Storage.CreateItem(ctx, userID, req.Item.Name, req.Item.Type, req.Item.Data)
+	item := &server.Item{
+		Data:       req.Item.Data,
+		CreateTime: req.Item.CreateTime.AsTime(),
+		UpdateTime: req.Item.UpdateTime.AsTime(),
+	}
+	id, err := s.Storage.CreateItem(ctx, userID, item)
 	if err != nil {
 		log.Error().Err(err).Ctx(ctx).Msg("create item error")
 		return nil, status.Errorf(codes.Internal, "create item error")
 	}
 
-	resp := pb.CreateResponse{
+	resp := pb.CreateItemResponse{
 		Id: id,
 	}
 
@@ -43,8 +49,8 @@ func (s *ItemServer) Create(ctx context.Context, req *pb.CreateRequest) (*pb.Cre
 	return &resp, nil
 }
 
-func (s *ItemServer) UpdateItemData(ctx context.Context, req *pb.UpdateItemDataRequest) (*pb.UpdateItemDataResponse, error) {
-	log.Ctx(ctx).Printf("Update item data, itemID:%v", req.Id)
+func (s *ItemServer) UpdateItem(ctx context.Context, req *pb.UpdateItemRequest) (*pb.UpdateItemResponse, error) {
+	log.Ctx(ctx).Printf("Update item, id:%v", req.Item.Id)
 
 	userID, ok := userid.Get(ctx)
 	if !ok {
@@ -52,18 +58,23 @@ func (s *ItemServer) UpdateItemData(ctx context.Context, req *pb.UpdateItemDataR
 		return nil, status.Errorf(codes.Unauthenticated, "no user id")
 	}
 
-	err := s.Storage.UpdateItem(ctx, userID, req.Id, req.Data)
+	item := &server.Item{
+		ID:         req.Item.Id,
+		Data:       req.Item.Data,
+		CreateTime: req.Item.CreateTime.AsTime(),
+		UpdateTime: req.Item.UpdateTime.AsTime()}
+	err := s.Storage.UpdateItem(ctx, userID, item)
 	if err != nil {
 		log.Error().Err(err).Ctx(ctx).Msg("update item error")
 		return nil, status.Errorf(codes.Internal, "update item error")
 	}
 
 	log.Ctx(ctx).Printf("Update item data success")
-	return &pb.UpdateItemDataResponse{}, nil
+	return &pb.UpdateItemResponse{}, nil
 }
 
-func (s *ItemServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	log.Ctx(ctx).Printf("Get item, itemID:%v", req.Id)
+func (s *ItemServer) GetItem(ctx context.Context, req *pb.GetItemRequest) (*pb.GetItemResponse, error) {
+	log.Ctx(ctx).Printf("Get item, id:%v", req.Id)
 
 	userID, ok := userid.Get(ctx)
 	if !ok {
@@ -77,14 +88,12 @@ func (s *ItemServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespon
 		return nil, status.Errorf(codes.Internal, "get item error")
 	}
 
-	resp := pb.GetResponse{
-		Data: &pb.ItemInfo{
-			Id: i.ID,
-			Item: &pb.Item{
-				Name: i.Name,
-				Type: i.Type,
-				Data: i.Data,
-			},
+	resp := pb.GetItemResponse{
+		Item: &pb.Item{
+			Id:         i.ID,
+			Data:       i.Data,
+			CreateTime: timestamppb.New(i.CreateTime),
+			UpdateTime: timestamppb.New(i.UpdateTime),
 		},
 	}
 
@@ -92,7 +101,7 @@ func (s *ItemServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespon
 	return &resp, nil
 }
 
-func (s *ItemServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
+func (s *ItemServer) ListItems(ctx context.Context, req *pb.ListItemsRequest) (*pb.ListItemsResponse, error) {
 	log.Ctx(ctx).Printf("List item")
 
 	userID, ok := userid.Get(ctx)
@@ -101,26 +110,46 @@ func (s *ItemServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListRes
 		return nil, status.Errorf(codes.Unauthenticated, "no user id")
 	}
 
-	l, err := s.Storage.ListItem(ctx, userID)
+	l, err := s.Storage.ListItems(ctx, userID)
 	if err != nil {
 		log.Error().Err(err).Ctx(ctx).Msg("list item error")
 		return nil, status.Errorf(codes.Internal, "list item error")
 	}
 
-	items := make([]*pb.ListItemInfo, 0, len(l))
+	items := make([]*pb.Item, 0, len(l))
 	for _, i := range l {
-		d := &pb.ListItemInfo{
-			Id:   i.ID,
-			Name: i.Name,
-			Type: i.Type,
+		d := &pb.Item{
+			Id:         i.ID,
+			Data:       i.Data,
+			CreateTime: timestamppb.New(i.CreateTime),
+			UpdateTime: timestamppb.New(i.UpdateTime),
 		}
 		items = append(items, d)
 	}
 
-	resp := pb.ListResponse{
-		Data: items,
+	resp := pb.ListItemsResponse{
+		Items: items,
 	}
 
 	log.Ctx(ctx).Printf("Get item success")
 	return &resp, nil
+}
+
+func (s *ItemServer) DeleteItem(ctx context.Context, req *pb.DeleteItemRequest) (*pb.DeleteItemResponse, error) {
+	log.Ctx(ctx).Printf("Delete item, id:%v", req.Id)
+
+	userID, ok := userid.Get(ctx)
+	if !ok {
+		log.Ctx(ctx).Printf("no user id")
+		return nil, status.Errorf(codes.Unauthenticated, "no user id")
+	}
+
+	err := s.Storage.DeleteItem(ctx, userID, req.Id)
+	if err != nil {
+		log.Error().Err(err).Ctx(ctx).Msg("delete item error")
+		return nil, status.Errorf(codes.Internal, "get item error")
+	}
+
+	log.Ctx(ctx).Printf("Delete item success")
+	return &pb.DeleteItemResponse{}, nil
 }

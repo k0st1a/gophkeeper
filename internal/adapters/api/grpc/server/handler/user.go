@@ -8,9 +8,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pb "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/gen/proto"
+	pb "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/gen/proto/v1"
 	"github.com/k0st1a/gophkeeper/internal/pkg/auth"
-	"github.com/k0st1a/gophkeeper/internal/ports"
+	"github.com/k0st1a/gophkeeper/internal/ports/server"
 	"github.com/rs/zerolog/log"
 )
 
@@ -18,7 +18,7 @@ type UserServer struct {
 	// нужно встраивать тип auth.Unimplemented<TypeName>
 	// для совместимости с будущими версиями
 	pb.UnimplementedUsersServiceServer
-	Storage ports.UserStorage
+	Storage server.UserStorage
 	Auth    auth.UserAuthentication
 }
 
@@ -33,7 +33,7 @@ func (s *UserServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb
 
 	id, err := s.Storage.CreateUser(ctx, req.Login, passwordHash)
 	if err != nil {
-		if errors.Is(err, ports.ErrLoginAlreadyBusy) {
+		if errors.Is(err, server.ErrLoginAlreadyBusy) {
 			return nil, status.Errorf(codes.AlreadyExists, "user already exists")
 		}
 
@@ -52,7 +52,7 @@ func (s *UserServer) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Login
 
 	userID, password, err := s.Storage.GetUserIDAndPassword(ctx, req.Login)
 	if err != nil {
-		if errors.Is(err, ports.ErrUserNotFound) {
+		if errors.Is(err, server.ErrUserNotFound) {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid credentials")
 		}
 
