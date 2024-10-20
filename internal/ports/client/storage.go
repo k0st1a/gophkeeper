@@ -37,9 +37,9 @@ type UpdateItem struct {
 	DeleteMark *bool
 }
 
-var ErrorItemNotFound = errors.New("item not found")
+var ErrItemNotFound = errors.New("item not found")
 
-// List2Map  - преобразование из list в map, где ключом выступает RemoteID.
+// List2MapWithRemoteID - преобразование из list в map, где ключом выступает RemoteID.
 func List2MapWithRemoteID(l []*Item) map[int64]*Item {
 	m := make(map[int64]*Item)
 	for _, v := range l {
@@ -48,7 +48,7 @@ func List2MapWithRemoteID(l []*Item) map[int64]*Item {
 	return m
 }
 
-// Map2List  - преобразование из map в list.
+// Map2List - преобразование из map в list.
 func Map2List(m map[string]Item) []Item {
 	l := make([]Item, len(m))
 	i := 0

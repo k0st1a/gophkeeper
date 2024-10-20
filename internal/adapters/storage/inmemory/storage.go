@@ -50,7 +50,7 @@ func (s *Storage) GetItem(ctx context.Context, id string) (*client.Item, error) 
 	i, ok := s.items[id]
 	if !ok {
 		log.Error().Msgf("Item(%v) not found", id)
-		return nil, client.ErrorItemNotFound
+		return nil, client.ErrItemNotFound
 	}
 
 	return &i, nil
@@ -80,7 +80,7 @@ func (s *Storage) UpdateItem(ctx context.Context, ui *client.UpdateItem) error {
 	i, ok := s.items[ui.ID]
 	if !ok {
 		log.Error().Msgf("Item(%v) not found", ui.ID)
-		return client.ErrorItemNotFound
+		return client.ErrItemNotFound
 	}
 
 	updateItem(&i, ui)
@@ -100,7 +100,7 @@ func (s *Storage) DeleteItem(ctx context.Context, id string) error {
 	_, ok := s.items[id]
 	if !ok {
 		log.Error().Msgf("Item(%v) not found", id)
-		return client.ErrorItemNotFound
+		return client.ErrItemNotFound
 	}
 
 	delete(s.items, id)

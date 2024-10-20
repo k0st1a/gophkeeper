@@ -26,7 +26,7 @@ func New(s sync.Doer, i time.Duration) *tick {
 
 func (t *tick) Run(ctx context.Context) error {
 	log.Printf("Run ticker, interval:%v seconds", t.interval.Seconds())
-	ticker := time.NewTicker(time.Duration(t.interval))
+	ticker := time.NewTicker(t.interval)
 
 	for {
 		select {
