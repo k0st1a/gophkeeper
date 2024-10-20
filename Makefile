@@ -136,6 +136,7 @@ cover:
 	mkdir -pv ./cover && \
 	go test -v -coverpkg=./... -coverprofile=./cover/cover.profile.tmp ./... && \
 	cat ./cover/cover.profile.tmp \
+		| grep -v "_easyjson.go" \
 		| grep -v "model.go" \
 		| grep -v "${PROTOBUF_PATH}" \
 		> ./cover/cover.profile && \
