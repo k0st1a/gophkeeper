@@ -7,19 +7,9 @@ import "google/api/annotations.proto";
 // UsersService is service for users managments.
 service UsersService {
   // Register registers a new user.
-  rpc Register (RegisterRequest) returns (RegisterResponse) {
-    option (google.api.http) = {
-        post: "/api/v1/users/register"
-        body: "*"
-    };
-  };
+  rpc Register (RegisterRequest) returns (RegisterResponse) {}
   // Login logs in a user and returns an auth token.
-  rpc Login (LoginRequest) returns (LoginResponse) {
-    option (google.api.http) = {
-        post: "/api/v1/users/login"
-        body: "*"
-    };
-  };
+  rpc Login (LoginRequest) returns (LoginResponse) {}
 }
 
 message RegisterRequest {
