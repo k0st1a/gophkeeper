@@ -45,25 +45,25 @@ func (s *sync) Do(ctx context.Context) error {
 	// local items to upload later
 	uitems := make([]*pclient.Item, 0)
 
-	for _, i := range litems {
-		if i.RemoteID == 0 && i.DeleteMark {
-			log.Ctx(ctx).Printf("Delete local item(%v)", i.ID)
-			err := s.local.DeleteItem(ctx, i.ID)
+	for i := 0; i < len(litems); i++ {
+		if litems[i].RemoteID == 0 && litems[i].DeleteMark {
+			log.Ctx(ctx).Printf("Delete local item(%v)", litems[i].ID)
+			err := s.local.DeleteItem(ctx, litems[i].ID)
 			if err != nil {
-				log.Ctx(ctx).Error().Err(err).Msgf("error of delete local item(%v)", i.ID)
+				log.Ctx(ctx).Error().Err(err).Msgf("error of delete local item(%v)", litems[i].ID)
 			}
-			log.Ctx(ctx).Printf("Local item(%v) deleted", i.ID)
+			log.Ctx(ctx).Printf("Local item(%v) deleted", litems[i].ID)
 			continue
 		}
 
-		if i.RemoteID == 0 {
-			log.Ctx(ctx).Printf("Add item(%v) to uitems", i.ID)
-			uitems = append(uitems, &i)
+		if litems[i].RemoteID == 0 {
+			log.Ctx(ctx).Printf("Add item(%v) to uitems", litems[i].ID)
+			uitems = append(uitems, &litems[i])
 			continue
 		}
 
-		log.Ctx(ctx).Printf("Add item(%v) to citems", i.ID)
-		citems = append(citems, &i)
+		log.Ctx(ctx).Printf("Add item(%v) to citems", litems[i].ID)
+		citems = append(citems, &litems[i])
 	}
 	log.Printf("uitems size:%v", len(uitems))
 	log.Printf("citems size:%v", len(citems))
