@@ -5,14 +5,19 @@ import (
 	"context"
 	"fmt"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
-	//cliclient "github.com/k0st1a/gophkeeper/internal/adapters/api/cli/client"
-	grpcclient "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/client"
+	"github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/client"
 	"github.com/k0st1a/gophkeeper/internal/adapters/api/tui"
+	tstorage "github.com/k0st1a/gophkeeper/internal/adapters/api/tui/storage"
+	"github.com/k0st1a/gophkeeper/internal/adapters/storage/inmemory"
 	"github.com/k0st1a/gophkeeper/internal/application/client/config"
+	"github.com/k0st1a/gophkeeper/internal/pkg/job"
 	"github.com/k0st1a/gophkeeper/internal/pkg/logwrap"
+	itemsync "github.com/k0st1a/gophkeeper/internal/pkg/sync"
+	"github.com/k0st1a/gophkeeper/internal/pkg/tick"
 	"github.com/rs/zerolog/log"
 )
 
@@ -23,8 +28,8 @@ func Run() error {
 	}
 	log.Printf("Cfg:%+v", cfg)
 
-	ctx, cancelFunc := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-	defer cancelFunc()
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	defer cancel()
 
 	if cfg.LogFile != "" {
 		err = logwrap.NewFile(cfg.LogLevel, cfg.LogFile)
@@ -36,26 +41,43 @@ func Run() error {
 		return fmt.Errorf("logwrap create error:%w", err)
 	}
 
-	grpc, err := grpcclient.New(cfg.Address, 3*time.Second)
+	gc, err := client.New(cfg.Address, 3*time.Second)
 	if err != nil {
 		return fmt.Errorf("make grpc client error:%w", err)
 	}
 
-	cli := tui.New(grpc)
+	s := inmemory.New()
 
+	is := itemsync.New(s, gc)
+	t := tick.New(is, 10*time.Second)
+
+	j := job.New(t)
+
+	ctx, cancel = context.WithCancel(ctx)
+
+	ts := tstorage.New(s)
+
+	ui := tui.New(gc, ts, j, cancel)
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
 	go func() {
-		err := cli.Run()
+		defer wg.Done()
+		err := ui.Run(ctx)
 		if err != nil {
-			log.Error().Err(err).Msg("failed to run tui client")
+			log.Error().Err(err).Msg("failed to run ui")
 		}
 	}()
 
 	<-ctx.Done()
 
-	err = cli.Shutdown()
+	err = ui.Stop(ctx)
 	if err != nil {
-		log.Error().Err(err).Msg("error of shutdown cli client")
+		log.Error().Err(err).Msg("error of stop ui")
 	}
+
+	wg.Wait()
 
 	return nil
 }
