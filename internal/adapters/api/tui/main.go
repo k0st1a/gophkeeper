@@ -318,7 +318,6 @@ func (c *client) ItemsPage(ctx context.Context) {
 		SetTitle("Table")
 
 	for i, item := range l {
-
 		name, err := item.GetName()
 		if err != nil {
 			log.Error().Err(err).Msg("error of get item name")
@@ -391,6 +390,7 @@ func (c *client) ItemsPage(ctx context.Context) {
 		})
 
 	buttons.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		//nolint // no need here
 		switch event.Key() {
 		case tcell.KeyTab:
 			c.app.SetFocus(table)
