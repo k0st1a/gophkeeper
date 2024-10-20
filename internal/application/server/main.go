@@ -8,8 +8,7 @@ import (
 	"syscall"
 
 	grpcserver "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/server"
-	"github.com/k0st1a/gophkeeper/internal/adapters/db"
-	"github.com/k0st1a/gophkeeper/internal/application/gateway"
+	"github.com/k0st1a/gophkeeper/internal/adapters/storage/db"
 	"github.com/k0st1a/gophkeeper/internal/application/server/config"
 	"github.com/k0st1a/gophkeeper/internal/pkg/auth"
 	"github.com/k0st1a/gophkeeper/internal/pkg/logwrap"
@@ -48,13 +47,6 @@ func Run() error {
 		err := srv.Run()
 		if err != nil {
 			log.Error().Err(err).Msg("failed to run server")
-		}
-	}()
-
-	go func() {
-		err := gateway.Run(ctx, "dns:///"+cfg.Address, cfg.HTTPAddress)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to run gateway")
 		}
 	}()
 
