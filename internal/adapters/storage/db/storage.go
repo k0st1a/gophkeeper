@@ -4,11 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/k0st1a/gophkeeper/internal/ports"
+	"github.com/k0st1a/gophkeeper/internal/ports/server"
 	"github.com/rs/zerolog/log"
 )
 
@@ -59,7 +58,7 @@ func (d *db) CreateUser(ctx context.Context, login, password string) (int64, err
 		login, password).Scan(&id)
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return 0, ports.ErrLoginAlreadyBusy
+		return 0, server.ErrLoginAlreadyBusy
 	}
 
 	if err != nil {
@@ -76,7 +75,7 @@ func (d *db) GetUserIDAndPassword(ctx context.Context, login string) (int64, str
 
 	err := d.pool.QueryRow(ctx, "SELECT id, password FROM users WHERE login = $1", login).Scan(&id, &password)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return 0, "", ports.ErrUserNotFound
+		return 0, "", server.ErrUserNotFound
 	}
 
 	if err != nil {
@@ -86,13 +85,13 @@ func (d *db) GetUserIDAndPassword(ctx context.Context, login string) (int64, str
 	return id, password, nil
 }
 
-func (d *db) CreateItem(ctx context.Context, userID int64, name, dataType string, data []byte) (int64, error) {
-	log.Ctx(ctx).Printf("CreateItem, userID:%v, name:%v, dataType:%v", userID, name, dataType)
+func (d *db) CreateItem(ctx context.Context, userID int64, item *server.Item) (int64, error) {
+	log.Ctx(ctx).Printf("CreateItem, userID:%v", userID)
 	var id int64
 
 	err := d.pool.QueryRow(ctx,
-		"INSERT INTO items (user_id, name, type, data, created_at) VALUES($1, $2, $3, $4, $5) RETURNING id",
-		userID, name, dataType, data, time.Now().UTC()).Scan(&id)
+		"INSERT INTO items (user_id, data, create_time, update_time) VALUES($1, $2, $3, $4) RETURNING id",
+		userID, item.Data, item.CreateTime, item.UpdateTime).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("failed to create item:%w", err)
 	}
@@ -101,13 +100,13 @@ func (d *db) CreateItem(ctx context.Context, userID int64, name, dataType string
 	return id, nil
 }
 
-func (d *db) UpdateItem(ctx context.Context, userID, itemID int64, data []byte) error {
-	log.Ctx(ctx).Printf("UpdateItem, userID:%v, itemID:%v", userID, itemID)
+func (d *db) UpdateItem(ctx context.Context, userID int64, item *server.Item) error {
+	log.Ctx(ctx).Printf("UpdateItem, userID:%v, itemID:%v", userID, item.ID)
 	var id int64
 
 	err := d.pool.QueryRow(ctx,
-		"UPDATE items SET data = $1, created_at = $2 WHERE id = $3, user_id = $4 RETURNING id",
-		data, time.Now().UTC(), itemID, userID).Scan(&id)
+		"UPDATE items SET data = $1, update_time = $2 WHERE id = $3 AND user_id = $4 RETURNING id",
+		item.Data, item.UpdateTime, item.ID, userID).Scan(&id)
 	if err != nil {
 		return fmt.Errorf("query error of update item:%w", err)
 	}
@@ -116,16 +115,16 @@ func (d *db) UpdateItem(ctx context.Context, userID, itemID int64, data []byte) 
 	return nil
 }
 
-func (d *db) GetItem(ctx context.Context, userID, itemID int64) (*ports.ItemInfo, error) {
+func (d *db) GetItem(ctx context.Context, userID, itemID int64) (*server.Item, error) {
 	log.Ctx(ctx).Printf("GetItem, userID:%v, itemID:%v", userID, itemID)
-	var item ports.ItemInfo
+	var item server.Item
 
 	err := d.pool.QueryRow(ctx,
-		"SELECT id, name, type, data, created_at FROM items WHERE user_id = $1, id = $2",
-		userID, itemID).Scan(&item.ID, &item.Name, &item.Type, &item.Data, &item.CreatedAt)
+		"SELECT id, data, create_time, update_time FROM items WHERE user_id = $1 AND id = $2",
+		userID, itemID).Scan(&item.ID, &item.Data, &item.CreateTime, &item.UpdateTime)
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, ports.ErrItemNotFound
+		return nil, server.ErrItemNotFound
 	}
 
 	if err != nil {
@@ -136,24 +135,24 @@ func (d *db) GetItem(ctx context.Context, userID, itemID int64) (*ports.ItemInfo
 	return &item, nil
 }
 
-func (d *db) ListItem(ctx context.Context, userID int64) ([]ports.ItemInfo, error) {
-	log.Ctx(ctx).Printf("ListItem, userID:%v", userID)
-	var items []ports.ItemInfo
+func (d *db) ListItems(ctx context.Context, userID int64) ([]server.Item, error) {
+	log.Ctx(ctx).Printf("ListItems, userID:%v", userID)
+	var items []server.Item
 
 	rows, err := d.pool.Query(ctx,
-		"SELECT id, name, type, created_at FROM items WHERE user_id = $1",
+		"SELECT id, data, create_time, update_time FROM items WHERE user_id = $1",
 		userID)
 	if err != nil {
 		return items, fmt.Errorf("query error of list item:%w", err)
 	}
 
 	for rows.Next() {
-		var item ports.ItemInfo
+		var item server.Item
 		err = rows.Scan(
 			&item.ID,
-			&item.Name,
-			&item.Type,
-			&item.CreatedAt,
+			&item.Data,
+			&item.CreateTime,
+			&item.UpdateTime,
 		)
 		if err != nil {
 			return items, fmt.Errorf("scan error of list item:%w", err)
@@ -166,6 +165,26 @@ func (d *db) ListItem(ctx context.Context, userID int64) ([]ports.ItemInfo, erro
 		return items, fmt.Errorf("error of list item:%w", err)
 	}
 
-	log.Ctx(ctx).Printf("ListItem success")
+	log.Ctx(ctx).Printf("ListItems success")
 	return items, nil
+}
+
+func (d *db) DeleteItem(ctx context.Context, userID, itemID int64) error {
+	log.Ctx(ctx).Printf("DeleteItem, userID:%v, itemID:%v", userID, itemID)
+	var id int64
+
+	err := d.pool.QueryRow(ctx,
+		"DELETE FROM items WHERE id = $1 AND user_id = $2 RETURNING id",
+		itemID, userID).Scan(&id)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return server.ErrItemNotFound
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to delete item:%w", err)
+	}
+
+	log.Ctx(ctx).Printf("DeleteItem success")
+	return nil
 }
