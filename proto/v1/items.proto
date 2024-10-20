@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package items.v3;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// ItemsService is service for CRUD under users data.
+service ItemsService {
+  // Create creates a item.
+  rpc CreateItem (CreateItemRequest) returns (CreateItemResponse) {}
+  // UpdateItemData updates field data of a item.
+  rpc UpdateItem (UpdateItemRequest) returns (UpdateItemResponse) {}
+  // Get gets a item.
+  rpc GetItem (GetItemRequest) returns (GetItemResponse) {}
+  // List gets lists of items.
+  rpc ListItems(ListItemsRequest) returns (ListItemsResponse) {}
+  // Delete deletes a item.
+  rpc DeleteItem (DeleteItemRequest) returns (DeleteItemResponse) {}
+}
+
+message Item {
+    int64 id = 1; // not used in create request
+    bytes data = 2;
+    google.protobuf.Timestamp create_time = 3;
+    google.protobuf.Timestamp update_time = 4;
+}
+
+message CreateItemRequest {
+    Item item = 1;
+}
+
+message CreateItemResponse {
+    int64 id = 1;
+}
+
+message UpdateItemRequest {
+    Item item = 1;
+}
+
+message UpdateItemResponse {
+}
+
+message GetItemRequest {
+    int64 id = 1;
+}
+
+message GetItemResponse {
+    Item item = 1;
+}
+
+message ListItemsRequest {
+}
+
+message ListItemsResponse {
+    repeated Item items = 1;
+}
+
+message DeleteItemRequest {
+    int64 id = 1;
+}
+
+message DeleteItemResponse {
+}
