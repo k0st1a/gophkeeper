@@ -15,7 +15,8 @@ import (
 	"github.com/k0st1a/gophkeeper/internal/ports/server"
 )
 
-func New(cfg *config.Config, u server.UserStorage, a auth.UserAuthentication, i server.ItemStorage) (*grpcserver.Server, error) {
+func New(cfg *config.Config, u server.UserStorage, a auth.UserAuthentication,
+	i server.ItemStorage) (*grpcserver.Server, error) {
 	// создаём gRPC-сервер без зарегистрированной службы
 	s := grpc.NewServer(grpc.ChainUnaryInterceptor(
 		interceptor.Authenticate(a),

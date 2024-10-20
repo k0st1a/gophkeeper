@@ -100,12 +100,11 @@ func (c *client) Run(ctx context.Context) error {
 	return nil
 }
 
-func (c *client) Stop(ctx context.Context) error {
+func (c *client) Stop(ctx context.Context) {
 	log.Ctx(ctx).Printf("Stop tui")
 	c.app.Stop()
 	c.StopSync(ctx)
 	c.cancel()
-	return nil
 }
 
 func (c *client) WelcomePage(ctx context.Context) {
@@ -175,13 +174,13 @@ func (c *client) RegisterPage(ctx context.Context) {
 		confirmPassword string
 	)
 	registerForm := tview.NewForm().
-		AddInputField("Email", "", 30, nil, func(text string) {
+		AddInputField("Email", "", defaultFieldWidth, nil, func(text string) {
 			email = text
 		}).
-		AddPasswordField("Password", "", 20, '*', func(text string) {
+		AddPasswordField("Password", "", defaultFieldWidth, '*', func(text string) {
 			password = text
 		}).
-		AddPasswordField("Confirm password", "", 20, '*', func(text string) {
+		AddPasswordField("Confirm password", "", defaultFieldWidth, '*', func(text string) {
 			confirmPassword = text
 		}).
 		AddButton("Register", func() {
@@ -242,10 +241,10 @@ func (c *client) LoginPage(ctx context.Context) {
 		password string
 	)
 	loginForm := tview.NewForm().
-		AddInputField("Email", "", 30, nil, func(text string) {
+		AddInputField("Email", "", defaultFieldWidth, nil, func(text string) {
 			email = text
 		}).
-		AddPasswordField("Password", "", 20, '*', func(text string) {
+		AddPasswordField("Password", "", defaultFieldWidth, '*', func(text string) {
 			password = text
 		}).
 		AddButton("Login", func() {

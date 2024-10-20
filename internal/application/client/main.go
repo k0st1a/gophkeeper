@@ -72,10 +72,7 @@ func Run() error {
 
 	<-ctx.Done()
 
-	err = ui.Stop(ctx)
-	if err != nil {
-		log.Error().Err(err).Msg("error of stop ui")
-	}
+	ui.Stop(ctx)
 
 	wg.Wait()
 
