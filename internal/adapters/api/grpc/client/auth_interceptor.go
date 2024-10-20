@@ -7,10 +7,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-type AuthTokenGeter interface {
-	GetAuthToken() string
-}
-
 // AddAuthToken – интерсептор, который добавляет token аутентикации в запрос.
 func AddAuthToken(g AuthTokenGeter) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req interface{},
