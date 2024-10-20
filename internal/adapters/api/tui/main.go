@@ -55,7 +55,9 @@ const (
 	labelNote        = "Note"
 	labelAdd         = "Add"
 
-	defaultFieldWidth = 30
+	defaultFieldWidth  = 30
+	defaultFieldHeight = 5
+	defaultMaxLength   = 5
 )
 
 const (
@@ -664,9 +666,10 @@ func (c *client) UpdateFilePage(ctx context.Context, i *storage.Item, f *storage
 		AddInputField(labelName, f.Name, defaultFieldWidth, nil, func(text string) {
 			f.Name = text
 		}).
-		AddTextArea(labelDescription, f.Description, defaultFieldWidth, 5, 255, func(text string) {
-			f.Description = text
-		}).
+		AddTextArea(labelDescription, f.Description, defaultFieldWidth, defaultFieldHeight, defaultMaxLength,
+			func(text string) {
+				f.Description = text
+			}).
 		AddInputField("Path to download", path, defaultFieldWidth, nil, func(text string) {
 			path = text
 		}).
@@ -720,7 +723,7 @@ func (c *client) AddFilePage(ctx context.Context) {
 			}
 
 			if s.Size() > int64(storage.MaxFileSize) {
-				c.NotifyPage(storage.ErrorLargeFile.Error())
+				c.NotifyPage(storage.ErrLargeFile.Error())
 				return
 			}
 			f.Name = s.Name()

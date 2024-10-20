@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	MaxFileSize    = 40 * 1024 * 1024 // 40MB
-	ErrorLargeFile = errors.New("large file")
+	MaxFileSize  = 40 * 1024 * 1024 // 40MB
+	ErrLargeFile = errors.New("large file")
 )
 
 type Item struct {

@@ -90,7 +90,7 @@ func (s *Storage) UpdateItem(ctx context.Context, ui *client.UpdateItem) error {
 	return nil
 }
 
-// UpdateItem - удаляет предмет.
+// DeleteItem - удаляет предмет.
 func (s *Storage) DeleteItem(ctx context.Context, id string) error {
 	log.Printf("Delete item, id:%v", id)
 

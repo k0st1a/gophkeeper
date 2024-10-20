@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ErrorBadItem = errors.New("bad item")
+	ErrBadItem = errors.New("bad item")
 )
 
 // Item - описание предмета клиента.
@@ -40,7 +40,7 @@ func (i *Item) GetBody() (any, error) {
 		return i.File, nil
 	}
 
-	return "", ErrorBadItem
+	return "", ErrBadItem
 }
 
 func (i *Item) GetName() (string, error) {
@@ -60,7 +60,7 @@ func (i *Item) GetName() (string, error) {
 		return i.File.GetName(), nil
 	}
 
-	return "", ErrorBadItem
+	return "", ErrBadItem
 }
 
 // Deserialize - распаковка байт в формат Item.
