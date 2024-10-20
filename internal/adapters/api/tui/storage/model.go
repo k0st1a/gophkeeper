@@ -12,7 +12,7 @@ var (
 )
 
 type Item struct {
-	Id         string
+	ID         string
 	Body       any // password, card, file, note
 	CreateTime time.Time
 	UpdateTime time.Time

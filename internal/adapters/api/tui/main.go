@@ -422,7 +422,7 @@ func (c *client) ItemsPage(ctx context.Context) {
 }
 
 func (c *client) UpdatePasswordPage(ctx context.Context, i *storage.Item, p *storage.Password) {
-	log.Printf("Invoked Updated password Page, item(%v)", i.Id)
+	log.Printf("Invoked Updated password Page, item(%v)", i.ID)
 
 	form := tview.NewForm().
 		AddInputField(labelResource, p.Resource, defaultFieldWidth, nil, func(text string) {
@@ -502,7 +502,7 @@ func (c *client) AddPasswordPage(ctx context.Context) {
 }
 
 func (c *client) UpdateCardPage(ctx context.Context, i *storage.Item, cd *storage.Card) {
-	log.Printf("Invoked Update card Page, item(%v)", i.Id)
+	log.Printf("Invoked Update card Page, item(%v)", i.ID)
 
 	form := tview.NewForm().
 		AddInputField(labelCardNumber, cd.Number, defaultFieldWidth, nil, func(text string) {
@@ -583,7 +583,7 @@ func (c *client) AddCardPage(ctx context.Context) {
 }
 
 func (c *client) UpdateNotePage(ctx context.Context, i *storage.Item, n *storage.Note) {
-	log.Printf("Invoked Update note Page, item(%v)", i.Id)
+	log.Printf("Invoked Update note Page, item(%v)", i.ID)
 
 	form := tview.NewForm().
 		AddInputField(labelName, n.Name, defaultFieldWidth, nil, func(text string) {
@@ -658,7 +658,7 @@ func (c *client) AddNotePage(ctx context.Context) {
 }
 
 func (c *client) UpdateFilePage(ctx context.Context, i *storage.Item, f *storage.File) {
-	log.Printf("Invoked update file Page, item(%v)", i.Id)
+	log.Printf("Invoked update file Page, item(%v)", i.ID)
 	var path string
 
 	form := tview.NewForm().
@@ -771,7 +771,7 @@ func (c *client) UpdateItemPage(ctx context.Context, item *storage.Item) {
 }
 
 func (c *client) DeleteItemPage(ctx context.Context, i *storage.Item, name, itype string) {
-	log.Printf("Invoked Delete item page, item(%v)", i.Id)
+	log.Printf("Invoked Delete item page, item(%v)", i.ID)
 
 	text := fmt.Sprintf("Delete %s %s?", itype, name)
 
@@ -785,7 +785,7 @@ func (c *client) DeleteItemPage(ctx context.Context, i *storage.Item, name, ityp
 				return
 			}
 			if buttonLabel == buttonNameDelete {
-				err := c.storage.DeleteItem(ctx, i.Id)
+				err := c.storage.DeleteItem(ctx, i.ID)
 				if err != nil {
 					c.NotifyPage("error of delete item" + err.Error())
 					return

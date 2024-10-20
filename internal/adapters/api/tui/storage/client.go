@@ -61,29 +61,29 @@ func (c *client) CreateItem(ctx context.Context, body any) (string, error) {
 }
 
 func (c *client) UpdateItem(ctx context.Context, i *Item) error {
-	log.Ctx(ctx).Printf("Update item(%v)", i.Id)
+	log.Ctx(ctx).Printf("Update item(%v)", i.ID)
 
 	mi, err := createStorageItemBody(i.Body)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("error of create storage item(%v) body", i.Id)
-		return fmt.Errorf("error of create storage item(%v) body:%w", i.Id, err)
+		log.Ctx(ctx).Error().Err(err).Msgf("error of create storage item(%v) body", i.ID)
+		return fmt.Errorf("error of create storage item(%v) body:%w", i.ID, err)
 	}
 
 	ut := time.Now()
 
 	ui := &pclient.UpdateItem{
-		ID:         i.Id,
+		ID:         i.ID,
 		Body:       mi,
 		UpdateTime: &ut,
 	}
 
 	err = c.storage.UpdateItem(ctx, ui)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("error of update storage item(%v)", i.Id)
-		return fmt.Errorf("error of update storage item(%v):%w", i.Id, err)
+		log.Ctx(ctx).Error().Err(err).Msgf("error of update storage item(%v)", i.ID)
+		return fmt.Errorf("error of update storage item(%v):%w", i.ID, err)
 	}
 
-	log.Ctx(ctx).Printf("Item(%v) updated", i.Id)
+	log.Ctx(ctx).Printf("Item(%v) updated", i.ID)
 	return nil
 }
 
@@ -107,7 +107,7 @@ func (c *client) GetItem(ctx context.Context, id string) (*Item, error) {
 	}
 
 	i := &Item{
-		Id:         si.ID,
+		ID:         si.ID,
 		Body:       b,
 		CreateTime: si.CreateTime,
 		UpdateTime: si.UpdateTime,
@@ -140,7 +140,7 @@ func (c *client) ListItems(ctx context.Context) ([]Item, error) {
 		}
 
 		i := Item{
-			Id:         si.ID,
+			ID:         si.ID,
 			Body:       b,
 			CreateTime: si.CreateTime,
 			UpdateTime: si.UpdateTime,
