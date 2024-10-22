@@ -26,8 +26,9 @@ func (s *ItemServer) CreateItem(ctx context.Context, req *pb.CreateItemRequest) 
 
 	userID, ok := userid.Get(ctx)
 	if !ok {
-		log.Ctx(ctx).Printf("no user id")
-		return nil, status.Errorf(codes.Unauthenticated, "no user id")
+		log.Ctx(ctx).Printf(ErrNoUserID.Error())
+		//nolint:wrapcheck // not need wrap error from status package
+		return nil, status.Error(codes.Unauthenticated, ErrNoUserID.Error())
 	}
 
 	item := &server.Item{
@@ -38,7 +39,8 @@ func (s *ItemServer) CreateItem(ctx context.Context, req *pb.CreateItemRequest) 
 	id, err := s.Storage.CreateItem(ctx, userID, item)
 	if err != nil {
 		log.Error().Err(err).Ctx(ctx).Msg("create item error")
-		return nil, status.Errorf(codes.Internal, "create item error")
+		//nolint:wrapcheck // not need wrap error from status package
+		return nil, status.Error(codes.Internal, "create item error")
 	}
 
 	resp := pb.CreateItemResponse{
@@ -54,8 +56,9 @@ func (s *ItemServer) UpdateItem(ctx context.Context, req *pb.UpdateItemRequest) 
 
 	userID, ok := userid.Get(ctx)
 	if !ok {
-		log.Ctx(ctx).Printf("no user id")
-		return nil, status.Errorf(codes.Unauthenticated, "no user id")
+		log.Ctx(ctx).Printf(ErrNoUserID.Error())
+		//nolint:wrapcheck // not need wrap error from status package
+		return nil, status.Error(codes.Unauthenticated, ErrNoUserID.Error())
 	}
 
 	item := &server.Item{
@@ -66,7 +69,8 @@ func (s *ItemServer) UpdateItem(ctx context.Context, req *pb.UpdateItemRequest) 
 	err := s.Storage.UpdateItem(ctx, userID, item)
 	if err != nil {
 		log.Error().Err(err).Ctx(ctx).Msg("update item error")
-		return nil, status.Errorf(codes.Internal, "update item error")
+		//nolint:wrapcheck // not need wrap error from status package
+		return nil, status.Error(codes.Internal, "update item error")
 	}
 
 	log.Ctx(ctx).Printf("Update item data success")
@@ -78,14 +82,16 @@ func (s *ItemServer) GetItem(ctx context.Context, req *pb.GetItemRequest) (*pb.G
 
 	userID, ok := userid.Get(ctx)
 	if !ok {
-		log.Ctx(ctx).Printf("no user id")
-		return nil, status.Errorf(codes.Unauthenticated, "no user id")
+		log.Ctx(ctx).Printf(ErrNoUserID.Error())
+		//nolint:wrapcheck // not need wrap error from status package
+		return nil, status.Error(codes.Unauthenticated, ErrNoUserID.Error())
 	}
 
 	i, err := s.Storage.GetItem(ctx, userID, req.Id)
 	if err != nil {
 		log.Error().Err(err).Ctx(ctx).Msg("get item error")
-		return nil, status.Errorf(codes.Internal, "get item error")
+		//nolint:wrapcheck // not need wrap error from status package
+		return nil, status.Error(codes.Internal, "get item error")
 	}
 
 	resp := pb.GetItemResponse{
@@ -106,14 +112,16 @@ func (s *ItemServer) ListItems(ctx context.Context, req *pb.ListItemsRequest) (*
 
 	userID, ok := userid.Get(ctx)
 	if !ok {
-		log.Ctx(ctx).Printf("no user id")
-		return nil, status.Errorf(codes.Unauthenticated, "no user id")
+		log.Ctx(ctx).Printf(ErrNoUserID.Error())
+		//nolint:wrapcheck // not need wrap error from status package
+		return nil, status.Error(codes.Unauthenticated, ErrNoUserID.Error())
 	}
 
 	l, err := s.Storage.ListItems(ctx, userID)
 	if err != nil {
 		log.Error().Err(err).Ctx(ctx).Msg("list item error")
-		return nil, status.Errorf(codes.Internal, "list item error")
+		//nolint:wrapcheck // not need wrap error from status package
+		return nil, status.Error(codes.Internal, "list item error")
 	}
 
 	items := make([]*pb.Item, 0, len(l))
@@ -140,14 +148,16 @@ func (s *ItemServer) DeleteItem(ctx context.Context, req *pb.DeleteItemRequest) 
 
 	userID, ok := userid.Get(ctx)
 	if !ok {
-		log.Ctx(ctx).Printf("no user id")
-		return nil, status.Errorf(codes.Unauthenticated, "no user id")
+		log.Ctx(ctx).Printf(ErrNoUserID.Error())
+		//nolint:wrapcheck // not need wrap error from status package
+		return nil, status.Error(codes.Unauthenticated, ErrNoUserID.Error())
 	}
 
 	err := s.Storage.DeleteItem(ctx, userID, req.Id)
 	if err != nil {
 		log.Error().Err(err).Ctx(ctx).Msg("delete item error")
-		return nil, status.Errorf(codes.Internal, "get item error")
+		//nolint:wrapcheck // not need wrap error from status package
+		return nil, status.Error(codes.Internal, "get item error")
 	}
 
 	log.Ctx(ctx).Printf("Delete item success")
