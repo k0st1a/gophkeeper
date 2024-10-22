@@ -41,8 +41,8 @@ type ItemManager interface {
 type client struct {
 	usersService   pb.UsersServiceClient
 	itemsService   pb.ItemsServiceClient
-	requestTimeout time.Duration
 	authToken      string
+	requestTimeout time.Duration
 }
 
 // New – создание клиента.
