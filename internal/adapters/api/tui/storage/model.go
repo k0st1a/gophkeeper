@@ -12,10 +12,10 @@ var (
 )
 
 type Item struct {
-	ID         string
-	Body       any // password, card, file, note
 	CreateTime time.Time
 	UpdateTime time.Time
+	Body       any // password, card, file, note
+	ID         string
 }
 
 func (i *Item) GetName() (string, error) {
