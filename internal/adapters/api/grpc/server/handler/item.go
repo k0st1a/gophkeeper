@@ -157,7 +157,7 @@ func (s *ItemServer) DeleteItem(ctx context.Context, req *pb.DeleteItemRequest) 
 	if err != nil {
 		log.Error().Err(err).Ctx(ctx).Msg("delete item error")
 		//nolint:wrapcheck // not need wrap error from status package
-		return nil, status.Error(codes.Internal, "get item error")
+		return nil, status.Error(codes.Internal, "delte item error")
 	}
 
 	log.Ctx(ctx).Printf("Delete item success")
