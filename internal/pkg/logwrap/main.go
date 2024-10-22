@@ -4,6 +4,7 @@ package logwrap
 import (
 	"fmt"
 	"os"
+	"syscall"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -57,7 +58,7 @@ func New(level string) error {
 }
 
 func NewFile(level string, path string) error {
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, syscall.S_IRUSR|syscall.S_IWUSR)
 	if err != nil {
 		return fmt.Errorf("error of open file for log:%w", err)
 	}

@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"syscall"
 	"time"
 
 	gclient "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/client"
@@ -674,7 +675,7 @@ func (c *client) UpdateFilePage(ctx context.Context, i *storage.Item, f *storage
 			path = text
 		}).
 		AddButton("Download", func() {
-			if err := os.WriteFile(path, f.Body, 0600); err != nil {
+			if err := os.WriteFile(path, f.Body, syscall.S_IRUSR|syscall.S_IWUSR); err != nil {
 				c.NotifyPage(err.Error())
 				return
 			}
