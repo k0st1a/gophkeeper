@@ -6,10 +6,14 @@ import (
 	"github.com/k0st1a/gophkeeper/internal/pkg/client/model"
 )
 
+// Item - модель Item клиента, для взаимодействия по GRPC с сервером.
 type Item struct {
-	Body       model.Item
+	// Тело предмета
+	Body model.Item
+	// Время создания предмета
 	CreateTime time.Time
+	// Время обновления предмета
 	UpdateTime time.Time
-	Type       string
-	ID         int64
+	// Идентификатор предмета
+	ID int64
 }
