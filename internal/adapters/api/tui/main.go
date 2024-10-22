@@ -57,7 +57,7 @@ const (
 
 	defaultFieldWidth  = 30
 	defaultFieldHeight = 5
-	defaultMaxLength   = 5
+	defaultMaxLength   = 255
 )
 
 const (
@@ -703,9 +703,10 @@ func (c *client) AddFilePage(ctx context.Context) {
 	var path string
 
 	form := tview.NewForm().
-		AddTextArea(labelDescription, f.Description, defaultFieldWidth, 5, 255, func(text string) {
-			f.Description = text
-		}).
+		AddTextArea(labelDescription, f.Description, defaultFieldWidth, defaultFieldHeight, defaultMaxLength,
+			func(text string) {
+				f.Description = text
+			}).
 		AddInputField("Path", path, defaultFieldWidth, nil, func(text string) {
 			path = text
 		}).
