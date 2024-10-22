@@ -41,7 +41,7 @@ func Run() error {
 		return fmt.Errorf("logwrap create error:%w", err)
 	}
 
-	gc, err := client.New(cfg.Address, 3*time.Second)
+	gc, err := client.New(cfg.Address, time.Duration(cfg.RequestTimeout)*time.Second)
 	if err != nil {
 		return fmt.Errorf("make grpc client error:%w", err)
 	}
@@ -49,7 +49,7 @@ func Run() error {
 	s := inmemory.New()
 
 	is := itemsync.New(s, gc)
-	t := tick.New(is, 10*time.Second)
+	t := tick.New(is, time.Duration(cfg.SyncInterval)*time.Second)
 
 	j := job.New(t)
 

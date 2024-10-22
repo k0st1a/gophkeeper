@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 // Config - структура с конфигурационными параметрами клиента.
@@ -21,18 +22,28 @@ type Config struct {
 	// SecretKey - ключ с помощью которого шифруются/проверяются пароли пользователя при регистрации и логине.
 	// Задается через флаг `-secret-key=<ЗНАЧЕНИЕ>` или переменную окружения `SECRET_KEY=<ЗНАЧЕНИЕ>`.
 	SecretKey string
+	// RequestTimeout - таймаут обращения к серверу, в секундах.
+	// Задается через флаг `-request-timeout=<ЗНАЧЕНИЕ>` или переменную окружения `REQUEST_TIMEOUT=<ЗНАЧЕНИЕ>`.
+	RequestTimeout int
+	// SyncInterval - интервал синхронизации предметов между локальным и удаленным хранилищем, в секундах.
+	// Задается через флаг `-sync-interval=<ЗНАЧЕНИЕ>` или переменную окружения `SYNC_INTERVAL=<ЗНАЧЕНИЕ>`.
+	SyncInterval int
 }
 
 var (
-	defaultAddress  = "localhost:8080"
-	defaultLogLevel = "info"
+	defaultAddress        = "localhost:8080"
+	defaultLogLevel       = "info"
+	defaultRequestTimeout = 3
+	defaultSyncInterval   = 10
 )
 
 // New - создать конфигурацию клиента из аргументов командой строки и переменных окружения.
 func New() (*Config, error) {
 	cfg := Config{
-		Address:  defaultAddress,
-		LogLevel: defaultLogLevel,
+		Address:        defaultAddress,
+		LogLevel:       defaultLogLevel,
+		RequestTimeout: defaultRequestTimeout,
+		SyncInterval:   defaultSyncInterval,
 	}
 
 	err := cfg.applyFromEnvAndArgs()
@@ -65,6 +76,24 @@ func (c *Config) applyFromEnvAndArgs() error {
 		c.SecretKey = sk
 	}
 
+	rt, ok := os.LookupEnv("REQUEST_TIMEOUT")
+	if ok {
+		rtInt, err := strconv.Atoi(rt)
+		if err != nil {
+			return fmt.Errorf("REQUEST_TIMEOUT parse error:%w", err)
+		}
+		c.RequestTimeout = rtInt
+	}
+
+	si, ok := os.LookupEnv("REQUEST_TIMEOUT")
+	if ok {
+		siInt, err := strconv.Atoi(si)
+		if err != nil {
+			return fmt.Errorf("SYNC_INTERVAL parse error:%w", err)
+		}
+		c.SyncInterval = siInt
+	}
+
 	flag.StringVar(&c.Address, "address", c.Address, "GRPC endpoint сервера в формате host:port.")
 	flag.StringVar(&c.LogLevel, "log-level", c.LogLevel,
 		"Уровень логирования. Задается через флаг `-log-level=<ЗНАЧЕНИЕ>` или переменную окружения "+
@@ -75,6 +104,12 @@ func (c *Config) applyFromEnvAndArgs() error {
 	flag.StringVar(&c.SecretKey, "secret-key", c.SecretKey,
 		"Ключ, с помощью которого шифруются/проверяются пароли пользователя при регистрации и логине."+
 			"Задается через флаг `-secret-key=<ЗНАЧЕНИЕ>` или переменную окружения `SECRET_KEY=<ЗНАЧЕНИЕ>`")
+	flag.IntVar(&c.RequestTimeout, "request-timeout", c.RequestTimeout,
+		"Таймаут обращения к серверу, в секундах.\n"+
+			"Задается через флаг `-request-timeout=<ЗНАЧЕНИЕ>` или переменную окружения `REQUEST_TIMEOUT=<ЗНАЧЕНИЕ>`")
+	flag.IntVar(&c.SyncInterval, "sync-interval", c.SyncInterval,
+		"Интервал синхронизации элементов между локальным хранилищем и удаленным, в секундах.\n"+
+			"Задается через флаг `-sync-interval=<ЗНАЧЕНИЕ>` или переменную окружения `SYNC_INTERVAL=<ЗНАЧЕНИЕ>`")
 
 	flag.Parse()
 
