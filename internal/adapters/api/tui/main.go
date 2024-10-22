@@ -467,6 +467,7 @@ func (c *client) AddPasswordPage(ctx context.Context) {
 
 	p := &storage.Password{}
 
+	//nolint:dupl // not need check for tview.NewForm
 	form := tview.NewForm().
 		AddInputField(labelResource, p.UserName, defaultFieldWidth, nil, func(text string) {
 			p.Resource = text
@@ -547,6 +548,7 @@ func (c *client) AddCardPage(ctx context.Context) {
 
 	cd := &storage.Card{}
 
+	//nolint:dupl // not need check for tview.NewForm
 	form := tview.NewForm().
 		AddInputField(labelCardNumber, cd.Number, defaultFieldWidth, nil, func(text string) {
 			cd.Number = text
