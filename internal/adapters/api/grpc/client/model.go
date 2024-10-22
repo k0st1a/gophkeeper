@@ -7,9 +7,9 @@ import (
 )
 
 type Item struct {
-	ID         int64
-	Type       string
 	Body       model.Item
 	CreateTime time.Time
 	UpdateTime time.Time
+	Type       string
+	ID         int64
 }
