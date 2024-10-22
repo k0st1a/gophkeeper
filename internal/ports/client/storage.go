@@ -36,11 +36,16 @@ type Item struct {
 // UpdateItem - для обновления полей предмета, хранящегося в базе на стороне клиента.
 // Если поле не nil, значит его нужно обновить для предмета в хранилище.
 type UpdateItem struct {
-	ID         string
-	RemoteID   *int64
-	Body       *model.Item
+	// Идендификатор предмета на удаленном сервере
+	RemoteID *int64
+	// Тело предмета
+	Body *model.Item
+	// Идендификатор предмета на удаленном сервере
 	UpdateTime *time.Time
+	// Отметка о необходимости удаления предмета
 	DeleteMark *bool
+	// Идентификатор предмета
+	ID string
 }
 
 var ErrItemNotFound = errors.New("item not found")
