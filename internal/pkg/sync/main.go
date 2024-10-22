@@ -10,6 +10,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	EqualItems = iota
+	NeedUpdateLocalItem
+	NeedUpdateRemoteItem
+	NeedDeleteBothItems
+)
+
 type Doer interface {
 	Do(ctx context.Context) error
 }
@@ -92,12 +99,12 @@ func (s *sync) Do(ctx context.Context) error {
 		log.Ctx(ctx).Printf("Found local item(%v) => compare items", li.ID)
 
 		cmp := compare(li, &ri)
-		if cmp == 0 {
+		if cmp == EqualItems {
 			log.Ctx(ctx).Printf("local item(%v) equal remote item(%v) => skip", li.ID, ri.ID)
 			continue
 		}
 
-		if cmp == 1 {
+		if cmp == NeedUpdateLocalItem {
 			log.Printf("Need update local item(%v)", li.ID)
 			err := s.updateLocalItem(ctx, li, &ri)
 			if err != nil {
@@ -106,7 +113,7 @@ func (s *sync) Do(ctx context.Context) error {
 			continue
 		}
 
-		if cmp == 2 {
+		if cmp == NeedUpdateRemoteItem {
 			log.Printf("Need update remote item(%v)", ri.ID)
 			err := s.updateRemoteItem(ctx, &ri, li)
 			if err != nil {
@@ -115,7 +122,7 @@ func (s *sync) Do(ctx context.Context) error {
 			continue
 		}
 
-		if cmp == 3 {
+		if cmp == NeedDeleteBothItems {
 			log.Printf("Need delete remote item(%v) and remote item(%v)", ri.ID, li.ID)
 			err := s.deleteBothItems(ctx, &ri, li)
 			if err != nil {
@@ -237,12 +244,6 @@ func (s *sync) deleteBothItems(ctx context.Context, r *gclient.Item, l *pclient.
 }
 
 // compare - сравить локальный и удаленный предметы.
-//
-//	Возвращает:
-//		0, если предметы одинаковы
-//		1, если нужно обновить локальный предмет
-//		2, если нужно обновить удаленный предмет
-//		3, если нужно удалить  локальный и удаленный предметы
 func compare(l *pclient.Item, r *gclient.Item) int {
 	log.Printf("Compare items, l.UpdateTime:%v, r.UpdateTime:%v", l.UpdateTime, r.UpdateTime)
 	ld := l.UpdateTime.UnixMilli()
@@ -250,16 +251,16 @@ func compare(l *pclient.Item, r *gclient.Item) int {
 	if ld > rd {
 		log.Printf("l.DeleteMark:%v", l.DeleteMark)
 		if l.DeleteMark {
-			return 3
+			return NeedDeleteBothItems
 		}
-		return 2
+		return NeedUpdateRemoteItem
 	}
 
 	if ld < rd {
-		return 1
+		return NeedUpdateLocalItem
 	}
 
-	return 0
+	return EqualItems
 }
 
 // makeLocalItem - создать локальный прдемет на основе удаленного.
