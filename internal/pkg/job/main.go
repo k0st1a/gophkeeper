@@ -14,9 +14,9 @@ type StartStopper interface {
 }
 
 type job struct {
+	cancel func()
 	do     tick.Runner
 	wg     sync.WaitGroup
-	cancel func()
 }
 
 func New(do tick.Runner) *job {
