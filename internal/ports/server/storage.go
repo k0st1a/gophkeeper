@@ -25,10 +25,10 @@ type ItemStorage interface {
 }
 
 type Item struct {
-	ID         int64
-	Data       []byte
 	CreateTime time.Time
 	UpdateTime time.Time
+	Data       []byte
+	ID         int64
 }
 
 var ErrItemNotFound = errors.New("item not found")
