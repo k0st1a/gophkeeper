@@ -19,11 +19,17 @@ type ItemStorage interface {
 
 // Item - предмет, хранящегося в базе на стороне клиента.
 type Item struct {
-	Body       model.Item
+	// Тело предмета
+	Body model.Item
+	// Время создания предмета
 	CreateTime time.Time
+	// Время обновления предмета
 	UpdateTime time.Time
-	ID         string
-	RemoteID   int64
+	// Идентификатор предмета
+	ID string
+	// Идендификатор предмета на удаленном сервере
+	RemoteID int64
+	// Отметка о необходимости удаления предмета
 	DeleteMark bool
 }
 
