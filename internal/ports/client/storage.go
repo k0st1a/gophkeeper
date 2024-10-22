@@ -19,11 +19,11 @@ type ItemStorage interface {
 
 // Item - предмет, хранящегося в базе на стороне клиента.
 type Item struct {
-	ID         string
-	RemoteID   int64
 	Body       model.Item
 	CreateTime time.Time
 	UpdateTime time.Time
+	ID         string
+	RemoteID   int64
 	DeleteMark bool
 }
 
