@@ -24,16 +24,19 @@ type client struct {
 	storage pclient.ItemStorage
 }
 
+// New - создать клиента для работы с хранилищем предметов.
 func New(s pclient.ItemStorage) *client {
 	return &client{
 		storage: s,
 	}
 }
 
+// Clear – подчистка хранилища.
 func (c *client) Clear(ctx context.Context) {
 	c.storage.Clear(ctx)
 }
 
+// CreateItem - создать предмет.
 func (c *client) CreateItem(ctx context.Context, body any) (string, error) {
 	log.Ctx(ctx).Printf("Create item")
 
@@ -60,6 +63,7 @@ func (c *client) CreateItem(ctx context.Context, body any) (string, error) {
 	return id, nil
 }
 
+// UpdateItem - обновить предмет.
 func (c *client) UpdateItem(ctx context.Context, i *Item) error {
 	log.Ctx(ctx).Printf("Update item(%v)", i.ID)
 
@@ -87,6 +91,7 @@ func (c *client) UpdateItem(ctx context.Context, i *Item) error {
 	return nil
 }
 
+// GetItem - получить предмет по его идентификатору.
 func (c *client) GetItem(ctx context.Context, id string) (*Item, error) {
 	log.Ctx(ctx).Printf("Get item(%v)", id)
 
@@ -117,6 +122,7 @@ func (c *client) GetItem(ctx context.Context, id string) (*Item, error) {
 	return i, nil
 }
 
+// ListItems - получить список предметов.
 func (c *client) ListItems(ctx context.Context) ([]Item, error) {
 	log.Ctx(ctx).Printf("List items")
 
@@ -153,6 +159,7 @@ func (c *client) ListItems(ctx context.Context) ([]Item, error) {
 	return l, nil
 }
 
+// DeleteItem - удалить предмет по его идентификатору.
 func (c *client) DeleteItem(ctx context.Context, id string) error {
 	log.Ctx(ctx).Printf("Delete item(%v)", id)
 
