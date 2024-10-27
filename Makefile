@@ -42,6 +42,33 @@ easyjson-install:
 	go install github.com/mailru/easyjson/...@latest
 
 ##--------------------------------------------------------------------
+## MOCKGEN INSTALL
+##--------------------------------------------------------------------
+.PHONY:mockgen-install
+mockgen-install:
+	go get go.uber.org/mock/mockgen@v0.5.0 && \
+	go install go.uber.org/mock/mockgen@v0.5.0
+
+##--------------------------------------------------------------------
+## MOCKGEN GENERATE
+##--------------------------------------------------------------------
+MOCK_DIR := "mock"
+.PHONY:mockgen-generate
+mockgen-generate: mockgen-clean
+	mockgen \
+		-source ./internal/ports/client/storage.go \
+		-destination ${MOCK_DIR}/storage/inmemory/storage_mock.go \
+		-package mock \
+		-write_source_comment
+
+##--------------------------------------------------------------------
+## MOCKGEN CLEAN
+##--------------------------------------------------------------------
+.PHONY:mockgen-clean
+mockgen-clean:
+	rm -v -rf ${MOCK_DIR}
+
+##--------------------------------------------------------------------
 ## PROTOBUF GENERATE
 ##--------------------------------------------------------------------
 ## TODO: Версии пакетов должны быть одни и теже в рамках Makefile.
@@ -137,6 +164,7 @@ cover:
 	go test -v -coverpkg=./... -coverprofile=./cover/cover.profile.tmp ./... && \
 	cat ./cover/cover.profile.tmp \
 		| grep -v "_easyjson.go" \
+		| grep -v "${MOCK_DIR}" \
 		| grep -v "model.go" \
 		| grep -v "${PROTOBUF_PATH}" \
 		> ./cover/cover.profile && \

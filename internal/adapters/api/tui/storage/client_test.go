@@ -3,10 +3,14 @@ package storage
 import (
 	"context"
 	"testing"
-
-	"github.com/stretchr/testify/require"
+	"time"
 
 	"github.com/k0st1a/gophkeeper/internal/adapters/storage/inmemory"
+	"github.com/k0st1a/gophkeeper/internal/pkg/client/model"
+	pclient "github.com/k0st1a/gophkeeper/internal/ports/client"
+	mockinmemory "github.com/k0st1a/gophkeeper/mock/storage/inmemory"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func TestCreateItem(t *testing.T) {
@@ -210,53 +214,70 @@ func TestUpdateItem(t *testing.T) {
 
 func TestListItems(t *testing.T) {
 	tests := []struct {
-		name    string
-		storage *inmemory.Storage
-		bodies  []any
+		name          string
+		inmemoryItems []pclient.Item
+		tuiItems      []Item
 	}{
 		{
-			name:    "Check ListItems",
-			storage: inmemory.New(),
-			bodies: []any{
-				&Password{
-					Resource: "Resource",
-					UserName: "Username",
-					Password: "Password",
+			name: "Check ListItems",
+			inmemoryItems: []pclient.Item{
+				pclient.Item{
+					Body: model.Item{
+						Card: &model.Card{
+							Number:  "Number",
+							Expires: "Expires",
+							Holder:  "Holder",
+						},
+					},
+					CreateTime: time.Date(2024, time.May, 5, 8, 10, 0, 0, time.UTC),
+					UpdateTime: time.Date(2024, time.May, 5, 8, 10, 0, 0, time.UTC),
+					ID:         "ID",
+					RemoteID:   1,
+					DeleteMark: false,
 				},
-				&Card{
-					Number:  "Number",
-					Expires: "Expires",
-					Holder:  "Holder",
+				pclient.Item{
+					Body: model.Item{
+						Card: &model.Card{
+							Number:  "Number 2",
+							Expires: "Expires 2",
+							Holder:  "Holder 2",
+						},
+					},
+					CreateTime: time.Date(2024, time.May, 5, 8, 10, 0, 2, time.UTC),
+					UpdateTime: time.Date(2024, time.May, 5, 8, 10, 0, 2, time.UTC),
+					ID:         "ID 2",
+					RemoteID:   2,
+					DeleteMark: true,
 				},
-				&Note{
-					Name: "Name",
-					Body: "Body",
-				},
-				&File{
-					Name:        "Name",
-					Description: "Description",
-					Body:        []byte("body"),
+			},
+			tuiItems: []Item{
+				Item{
+					CreateTime: time.Date(2024, time.May, 5, 8, 10, 0, 0, time.UTC),
+					UpdateTime: time.Date(2024, time.May, 5, 8, 10, 0, 0, time.UTC),
+					Body: &Card{
+						Number:  "Number",
+						Expires: "Expires",
+						Holder:  "Holder",
+					},
+					ID: "ID",
 				},
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			c := New(test.storage)
+			ctrl := gomock.NewController(t)
 			ctx := context.Background()
-			for _, b := range test.bodies {
-				_, err := c.CreateItem(ctx, b)
-				require.NoError(t, err)
-			}
+			ms := mockinmemory.NewMockItemStorage(ctrl)
+			ms.
+				EXPECT().
+				ListItems(ctx).
+				Return(test.inmemoryItems, nil)
+
+			c := New(ms)
 			items, err := c.ListItems(ctx)
 			require.NoError(t, err)
-			require.Len(t, items, len(test.bodies))
-			bodies := make([]any, len(test.bodies))
-			for p, i := range items {
-				bodies[p] = i.Body
-			}
-			require.Equal(t, len(test.bodies), len(bodies))
-			require.ElementsMatch(t, test.bodies, bodies)
+			require.ElementsMatch(t, test.tuiItems, items)
 		})
 	}
 }
