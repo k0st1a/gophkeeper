@@ -40,7 +40,7 @@ func Authenticate(auth auth.UserAuthentication) grpc.UnaryServerInterceptor {
 			return nil, status.Errorf(codes.Unauthenticated, "no user id in token")
 		}
 
-		CtxWithUserID := userid.Add(ctx, userID)
+		CtxWithUserID := userid.Set(ctx, userID)
 
 		return h(CtxWithUserID, r)
 	}

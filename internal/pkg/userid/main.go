@@ -5,8 +5,8 @@ import "context"
 
 type userIDKey struct{}
 
-// Add adds user id to context.
-func Add(ctx context.Context, id int64) context.Context {
+// Set adds user id to context.
+func Set(ctx context.Context, id int64) context.Context {
 	return context.WithValue(ctx, userIDKey{}, id)
 }
 
