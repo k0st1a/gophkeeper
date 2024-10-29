@@ -76,6 +76,22 @@ func easyjsonA80d3b19DecodeGithubComK0st1aGophkeeperInternalPkgClientModel(in *j
 				}
 				easyjsonA80d3b19DecodeGithubComK0st1aGophkeeperInternalPkgClientModel4(in, out.File)
 			}
+		case "meta":
+			if in.IsNull() {
+				in.Skip()
+			} else {
+				in.Delim('{')
+				out.Meta = make(Meta)
+				for !in.IsDelim('}') {
+					key := string(in.String())
+					in.WantColon()
+					var v1 string
+					v1 = string(in.String())
+					(out.Meta)[key] = v1
+					in.WantComma()
+				}
+				in.Delim('}')
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -126,6 +142,27 @@ func easyjsonA80d3b19EncodeGithubComK0st1aGophkeeperInternalPkgClientModel(out *
 			easyjsonA80d3b19EncodeGithubComK0st1aGophkeeperInternalPkgClientModel4(out, *in.File)
 		}
 	}
+	{
+		const prefix string = ",\"meta\":"
+		out.RawString(prefix)
+		if in.Meta == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
+			out.RawString(`null`)
+		} else {
+			out.RawByte('{')
+			v2First := true
+			for v2Name, v2Value := range in.Meta {
+				if v2First {
+					v2First = false
+				} else {
+					out.RawByte(',')
+				}
+				out.String(string(v2Name))
+				out.RawByte(':')
+				out.String(string(v2Value))
+			}
+			out.RawByte('}')
+		}
+	}
 	out.RawByte('}')
 }
 
@@ -173,8 +210,6 @@ func easyjsonA80d3b19DecodeGithubComK0st1aGophkeeperInternalPkgClientModel4(in *
 		switch key {
 		case "name":
 			out.Name = string(in.String())
-		case "description":
-			out.Description = string(in.String())
 		case "body":
 			if in.IsNull() {
 				in.Skip()
@@ -200,11 +235,6 @@ func easyjsonA80d3b19EncodeGithubComK0st1aGophkeeperInternalPkgClientModel4(out 
 		const prefix string = ",\"name\":"
 		out.RawString(prefix[1:])
 		out.String(string(in.Name))
-	}
-	{
-		const prefix string = ",\"description\":"
-		out.RawString(prefix)
-		out.String(string(in.Description))
 	}
 	{
 		const prefix string = ",\"body\":"

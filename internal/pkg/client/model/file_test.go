@@ -15,9 +15,8 @@ func TestFileGetName(t *testing.T) {
 		{
 			name: "Check GetName for File",
 			file: File{
-				Name:        "Name",
-				Description: "Description",
-				Body:        []byte("Body"),
+				Name: "Name",
+				Body: []byte("Body"),
 			},
 			expectedName: "Name",
 		},

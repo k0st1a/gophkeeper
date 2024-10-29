@@ -11,6 +11,7 @@ import (
 
 	gclient "github.com/k0st1a/gophkeeper/internal/adapters/api/grpc/client"
 	"github.com/k0st1a/gophkeeper/internal/adapters/api/tui/storage"
+	"github.com/k0st1a/gophkeeper/internal/pkg/client/model"
 	"github.com/k0st1a/gophkeeper/internal/pkg/job"
 
 	"github.com/gdamore/tcell/v2"
@@ -45,16 +46,17 @@ const (
 	buttonNameDelete = "Delete"
 
 	// Имена надписей.
-	labelName        = "Name"
-	labelDescription = "Description"
-	labelResource    = "Resource"
-	labelUserName    = "User name"
-	labelPassword    = "Password"
-	labelCardNumber  = "Card Number"
-	labelCardExpires = "Card expires"
-	labelCardHolder  = "Card holder"
-	labelNote        = "Note"
-	labelAdd         = "Add"
+	labelName                  = "Name"
+	labelDescription           = "Description"
+	labelResource              = "Resource"
+	labelUserName              = "User name"
+	labelPassword              = "Password"
+	labelAdditionalInformation = "Additional information"
+	labelCardNumber            = "Card Number"
+	labelCardExpires           = "Card expires"
+	labelCardHolder            = "Card holder"
+	labelNote                  = "Note"
+	labelAdd                   = "Add"
 
 	defaultFieldWidth  = 30
 	defaultFieldHeight = 5
@@ -436,6 +438,14 @@ func (c *client) UpdatePasswordPage(ctx context.Context, i *storage.Item, p *sto
 		AddInputField(labelPassword, p.Password, defaultFieldWidth, nil, func(text string) {
 			p.Password = text
 		}).
+		AddTextArea(labelDescription, i.Meta.Get(model.MetaKeyDescription), defaultFieldWidth,
+			defaultFieldHeight, defaultMaxLength, func(text string) {
+				i.Meta.Set(model.MetaKeyDescription, text)
+			}).
+		AddTextArea(labelAdditionalInformation, i.Meta.Get(model.MetaKeyAdditionalInformation), defaultFieldWidth,
+			defaultFieldHeight, defaultMaxLength, func(text string) {
+				i.Meta.Set(model.MetaKeyAdditionalInformation, text)
+			}).
 		AddButton(buttonNameUpdate, func() {
 			err := c.storage.UpdateItem(ctx, i)
 			if err != nil {
@@ -466,6 +476,7 @@ func (c *client) AddPasswordPage(ctx context.Context) {
 	log.Printf("Invoked Add password Page")
 
 	p := &storage.Password{}
+	m := storage.Meta{}
 
 	//nolint:dupl // not need check for tview.NewForm
 	form := tview.NewForm().
@@ -478,8 +489,16 @@ func (c *client) AddPasswordPage(ctx context.Context) {
 		AddInputField(labelPassword, p.Password, defaultFieldWidth, nil, func(text string) {
 			p.Password = text
 		}).
+		AddTextArea(labelDescription, "", defaultFieldWidth, defaultFieldHeight, defaultMaxLength,
+			func(text string) {
+				m.Set(model.MetaKeyDescription, text)
+			}).
+		AddTextArea(labelAdditionalInformation, "", defaultFieldWidth, defaultFieldHeight, defaultMaxLength,
+			func(text string) {
+				m.Set(model.MetaKeyAdditionalInformation, text)
+			}).
 		AddButton(buttonNameOk, func() {
-			_, err := c.storage.CreateItem(ctx, p)
+			_, err := c.storage.CreateItem(ctx, p, m)
 			if err != nil {
 				log.Error().Err(err).Msg("Item add error while add password")
 				c.NotifyPage(err.Error())
@@ -517,6 +536,14 @@ func (c *client) UpdateCardPage(ctx context.Context, i *storage.Item, cd *storag
 		AddInputField(labelCardHolder, cd.Holder, defaultFieldWidth, nil, func(text string) {
 			cd.Holder = text
 		}).
+		AddTextArea(labelDescription, i.Meta.Get(model.MetaKeyDescription), defaultFieldWidth,
+			defaultFieldHeight, defaultMaxLength, func(text string) {
+				i.Meta.Set(model.MetaKeyDescription, text)
+			}).
+		AddTextArea(labelAdditionalInformation, i.Meta.Get(model.MetaKeyAdditionalInformation), defaultFieldWidth,
+			defaultFieldHeight, defaultMaxLength, func(text string) {
+				i.Meta.Set(model.MetaKeyAdditionalInformation, text)
+			}).
 		AddButton(buttonNameUpdate, func() {
 			err := c.storage.UpdateItem(ctx, i)
 			if err != nil {
@@ -547,6 +574,7 @@ func (c *client) AddCardPage(ctx context.Context) {
 	log.Printf("Invoked Add card Page")
 
 	cd := &storage.Card{}
+	m := storage.Meta{}
 
 	//nolint:dupl // not need check for tview.NewForm
 	form := tview.NewForm().
@@ -559,8 +587,16 @@ func (c *client) AddCardPage(ctx context.Context) {
 		AddInputField(labelCardHolder, cd.Holder, defaultFieldWidth, nil, func(text string) {
 			cd.Holder = text
 		}).
+		AddTextArea(labelDescription, "", defaultFieldWidth, defaultFieldHeight, defaultMaxLength,
+			func(text string) {
+				m.Set(model.MetaKeyDescription, text)
+			}).
+		AddTextArea(labelAdditionalInformation, "", defaultFieldWidth, defaultFieldHeight, defaultMaxLength,
+			func(text string) {
+				m.Set(model.MetaKeyAdditionalInformation, text)
+			}).
 		AddButton(buttonNameOk, func() {
-			_, err := c.storage.CreateItem(ctx, cd)
+			_, err := c.storage.CreateItem(ctx, cd, m)
 			if err != nil {
 				log.Error().Err(err).Msg("Item add error while add card")
 				c.NotifyPage(err.Error())
@@ -596,6 +632,14 @@ func (c *client) UpdateNotePage(ctx context.Context, i *storage.Item, n *storage
 		AddTextArea(labelNote, n.Body, defaultFieldWidth, 0, 0, func(text string) {
 			n.Body = text
 		}).
+		AddTextArea(labelDescription, i.Meta.Get(model.MetaKeyDescription), defaultFieldWidth,
+			defaultFieldHeight, defaultMaxLength, func(text string) {
+				i.Meta.Set(model.MetaKeyDescription, text)
+			}).
+		AddTextArea(labelAdditionalInformation, i.Meta.Get(model.MetaKeyAdditionalInformation), defaultFieldWidth,
+			defaultFieldHeight, defaultMaxLength, func(text string) {
+				i.Meta.Set(model.MetaKeyAdditionalInformation, text)
+			}).
 		AddButton(buttonNameUpdate, func() {
 			err := c.storage.UpdateItem(ctx, i)
 			if err != nil {
@@ -626,6 +670,7 @@ func (c *client) AddNotePage(ctx context.Context) {
 	log.Printf("Invoked Add note Page")
 
 	n := &storage.Note{}
+	m := storage.Meta{}
 
 	form := tview.NewForm().
 		AddInputField(labelName, n.Name, defaultFieldWidth, nil, func(text string) {
@@ -634,8 +679,16 @@ func (c *client) AddNotePage(ctx context.Context) {
 		AddTextArea(labelNote, n.Body, defaultFieldWidth, 0, 0, func(text string) {
 			n.Body = text
 		}).
+		AddTextArea(labelDescription, "", defaultFieldWidth, defaultFieldHeight, defaultMaxLength,
+			func(text string) {
+				m.Set(model.MetaKeyDescription, text)
+			}).
+		AddTextArea(labelAdditionalInformation, "", defaultFieldWidth, defaultFieldHeight, defaultMaxLength,
+			func(text string) {
+				m.Set(model.MetaKeyAdditionalInformation, text)
+			}).
 		AddButton(buttonNameOk, func() {
-			_, err := c.storage.CreateItem(ctx, n)
+			_, err := c.storage.CreateItem(ctx, n, m)
 			if err != nil {
 				log.Error().Err(err).Msg("Item add error while add note")
 				c.NotifyPage(err.Error())
@@ -669,13 +722,17 @@ func (c *client) UpdateFilePage(ctx context.Context, i *storage.Item, f *storage
 		AddInputField(labelName, f.Name, defaultFieldWidth, nil, func(text string) {
 			f.Name = text
 		}).
-		AddTextArea(labelDescription, f.Description, defaultFieldWidth, defaultFieldHeight, defaultMaxLength,
-			func(text string) {
-				f.Description = text
-			}).
 		AddInputField("Path to download", path, defaultFieldWidth, nil, func(text string) {
 			path = text
 		}).
+		AddTextArea(labelDescription, i.Meta.Get(model.MetaKeyDescription), defaultFieldWidth,
+			defaultFieldHeight, defaultMaxLength, func(text string) {
+				i.Meta.Set(model.MetaKeyDescription, text)
+			}).
+		AddTextArea(labelAdditionalInformation, i.Meta.Get(model.MetaKeyAdditionalInformation), defaultFieldWidth,
+			defaultFieldHeight, defaultMaxLength, func(text string) {
+				i.Meta.Set(model.MetaKeyAdditionalInformation, text)
+			}).
 		AddButton("Download", func() {
 			if err := os.WriteFile(path, f.Body, syscall.S_IRUSR|syscall.S_IWUSR); err != nil {
 				c.NotifyPage(err.Error())
@@ -703,16 +760,22 @@ func (c *client) AddFilePage(ctx context.Context) {
 	log.Printf("Invoked Add file Page")
 
 	f := &storage.File{}
+	m := storage.Meta{}
+
 	var path string
 
 	form := tview.NewForm().
-		AddTextArea(labelDescription, f.Description, defaultFieldWidth, defaultFieldHeight, defaultMaxLength,
-			func(text string) {
-				f.Description = text
-			}).
 		AddInputField("Path", path, defaultFieldWidth, nil, func(text string) {
 			path = text
 		}).
+		AddTextArea(labelDescription, "", defaultFieldWidth, defaultFieldHeight, defaultMaxLength,
+			func(text string) {
+				m.Set(model.MetaKeyDescription, text)
+			}).
+		AddTextArea(labelAdditionalInformation, "", defaultFieldWidth, defaultFieldHeight, defaultMaxLength,
+			func(text string) {
+				m.Set(model.MetaKeyAdditionalInformation, text)
+			}).
 		AddButton(labelAdd, func() {
 			d, err := os.ReadFile(path)
 			if err != nil {
@@ -733,7 +796,7 @@ func (c *client) AddFilePage(ctx context.Context) {
 			f.Name = s.Name()
 			f.Body = d
 
-			_, err = c.storage.CreateItem(ctx, f)
+			_, err = c.storage.CreateItem(ctx, f, m)
 			if err != nil {
 				log.Error().Err(err).Msg("Item add error while add file")
 				c.NotifyPage(err.Error())

@@ -13,7 +13,7 @@ import (
 
 type ItemStorage interface {
 	Clear(ctx context.Context)
-	CreateItem(ctx context.Context, body any) (string, error)
+	CreateItem(ctx context.Context, body any, meta Meta) (string, error)
 	UpdateItem(ctx context.Context, item *Item) error
 	GetItem(ctx context.Context, id string) (*Item, error)
 	ListItems(ctx context.Context) ([]Item, error)
@@ -37,18 +37,22 @@ func (c *client) Clear(ctx context.Context) {
 }
 
 // CreateItem - создать предмет.
-func (c *client) CreateItem(ctx context.Context, body any) (string, error) {
+func (c *client) CreateItem(ctx context.Context, body any, meta Meta) (string, error) {
 	log.Ctx(ctx).Printf("Create item")
 
-	mi, err := createStorageItemBody(body)
+	var item model.Item
+
+	err := convertAndFillBody(&item, body)
 	if err != nil {
-		return "", err
+		log.Ctx(ctx).Error().Err(err).Msgf("error of convert and fill body while create item")
+		return "", fmt.Errorf("error of convert and fill body while create item:%w", err)
 	}
+	item.Meta = model.Meta(meta)
 
 	now := time.Now()
 
 	si := &pclient.Item{
-		Body:       *mi,
+		Body:       item,
 		CreateTime: now,
 		UpdateTime: now,
 		DeleteMark: false,
@@ -67,17 +71,19 @@ func (c *client) CreateItem(ctx context.Context, body any) (string, error) {
 func (c *client) UpdateItem(ctx context.Context, i *Item) error {
 	log.Ctx(ctx).Printf("Update item(%v)", i.ID)
 
-	mi, err := createStorageItemBody(i.Body)
+	var item model.Item
+
+	err := convertAndFillBody(&item, i.Body)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("error of create storage item(%v) body", i.ID)
-		return fmt.Errorf("error of create storage item(%v) body:%w", i.ID, err)
+		log.Ctx(ctx).Error().Err(err).Msgf("error of convert and fill body while update item(%v)", i.ID)
+		return fmt.Errorf("error of convert and fill body while update item(%v):%w", i.ID, err)
 	}
+	item.Meta = model.Meta(i.Meta)
 
 	ut := time.Now()
-
 	ui := &pclient.UpdateItem{
 		ID:         i.ID,
-		Body:       mi,
+		Body:       &item,
 		UpdateTime: &ut,
 	}
 
@@ -105,17 +111,9 @@ func (c *client) GetItem(ctx context.Context, id string) (*Item, error) {
 		return nil, fmt.Errorf("Item(%v) mark to delete", id)
 	}
 
-	b, err := createItemBody(&si.Body)
+	i, err := parseItem(si)
 	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msgf("error of create item(%v) body", id)
-		return nil, fmt.Errorf("error of create item(%v) body:%w", id, err)
-	}
-
-	i := &Item{
-		ID:         si.ID,
-		Body:       b,
-		CreateTime: si.CreateTime,
-		UpdateTime: si.UpdateTime,
+		return nil, fmt.Errorf("error of parse item(%v) while get item", id)
 	}
 
 	log.Ctx(ctx).Printf("Item(%v) got", id)
@@ -139,20 +137,12 @@ func (c *client) ListItems(ctx context.Context) ([]Item, error) {
 			continue
 		}
 
-		b, err := createItemBody(&si.Body)
+		i, err := parseItem(&si)
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msgf("Error of create item(%v) body", si.ID)
-			continue
+			return nil, fmt.Errorf("error of parse item(%v) while list items", si.ID)
 		}
 
-		i := Item{
-			ID:         si.ID,
-			Body:       b,
-			CreateTime: si.CreateTime,
-			UpdateTime: si.UpdateTime,
-		}
-
-		l = append(l, i)
+		l = append(l, *i)
 	}
 
 	log.Ctx(ctx).Printf("List items success")
@@ -182,75 +172,118 @@ func (c *client) DeleteItem(ctx context.Context, id string) error {
 	return nil
 }
 
-func createStorageItemBody(body any) (*model.Item, error) {
-	var mi model.Item
-
-	switch b := body.(type) {
-	case *Password:
-		mi.Password = &model.Password{
-			Resource: b.Resource,
-			UserName: b.UserName,
-			Password: b.Password,
-		}
-	case *Card:
-		mi.Card = &model.Card{
-			Number:  b.Number,
-			Expires: b.Expires,
-			Holder:  b.Holder,
-		}
-	case *Note:
-		mi.Note = &model.Note{
-			Name: b.Name,
-			Body: b.Body,
-		}
-	case *File:
-		mi.File = &model.File{
-			Name:        b.Name,
-			Description: b.Description,
-			Body:        b.Body,
-		}
-	default:
-		return nil, fmt.Errorf("unkown item body type:%v", reflect.TypeOf(b))
+func parseItem(i *pclient.Item) (*Item, error) {
+	b, err := parseBody(&i.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error of parse item(%v) body:%w", i.ID, err)
 	}
 
-	return &mi, nil
+	return &Item{
+		ID:         i.ID,
+		Body:       b,
+		Meta:       Meta(i.Body.Meta),
+		CreateTime: i.CreateTime,
+		UpdateTime: i.UpdateTime,
+	}, nil
 }
 
-func createItemBody(mi *model.Item) (any, error) {
-	mib, err := mi.GetBody()
+func convertPassword(b *Password) *model.Password {
+	return &model.Password{
+		Resource: b.Resource,
+		UserName: b.UserName,
+		Password: b.Password,
+	}
+}
+
+func convertCard(b *Card) *model.Card {
+	return &model.Card{
+		Number:  b.Number,
+		Expires: b.Expires,
+		Holder:  b.Holder,
+	}
+}
+
+func convertNote(b *Note) *model.Note {
+	return &model.Note{
+		Name: b.Name,
+		Body: b.Body,
+	}
+}
+
+func convertFile(b *File) *model.File {
+	return &model.File{
+		Name: b.Name,
+		Body: b.Body,
+	}
+}
+
+func convertAndFillBody(i *model.Item, body any) error {
+	switch b := body.(type) {
+	case *Password:
+		i.Password = convertPassword(b)
+	case *Card:
+		i.Card = convertCard(b)
+	case *Note:
+		i.Note = convertNote(b)
+	case *File:
+		i.File = convertFile(b)
+	default:
+		return fmt.Errorf("unkown item body type:%v", reflect.TypeOf(b))
+	}
+
+	return nil
+}
+
+func parsePassword(b *model.Password) *Password {
+	return &Password{
+		Resource: b.Resource,
+		UserName: b.UserName,
+		Password: b.Password,
+	}
+}
+
+func parseCard(b *model.Card) *Card {
+	return &Card{
+		Number:  b.Number,
+		Expires: b.Expires,
+		Holder:  b.Holder,
+	}
+}
+
+func parseNote(b *model.Note) *Note {
+	return &Note{
+		Name: b.Name,
+		Body: b.Body,
+	}
+}
+
+func parseFile(b *model.File) *File {
+	return &File{
+		Name: b.Name,
+		Body: b.Body,
+	}
+}
+
+func parseBody(i *model.Item) (any, error) {
+	ib, err := i.GetBody()
 	if err != nil {
 		return nil, fmt.Errorf("error of get item body:%w", err)
 	}
 
-	var ib any
+	var pib any
 
-	switch b := mib.(type) {
+	switch b := ib.(type) {
 	case *model.Password:
-		ib = &Password{
-			Resource: b.Resource,
-			UserName: b.UserName,
-			Password: b.Password,
-		}
+		pib = parsePassword(b)
 	case *model.Card:
-		ib = &Card{
-			Number:  b.Number,
-			Expires: b.Expires,
-			Holder:  b.Holder,
-		}
+		pib = parseCard(b)
 	case *model.Note:
-		ib = &Note{
-			Name: b.Name,
-			Body: b.Body,
-		}
+		pib = parseNote(b)
 	case *model.File:
-		ib = &File{
-			Name:        b.Name,
-			Description: b.Description,
-			Body:        b.Body,
-		}
+		pib = parseFile(b)
 	default:
 		return nil, fmt.Errorf("unkown storage item body:%v", reflect.TypeOf(b))
 	}
 
-	return ib, nil
+	return pib, nil
 }

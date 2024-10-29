@@ -4,9 +4,8 @@ package model
 //
 //easyjson:json
 type File struct {
-	Name        string `json:"name"`        // Путь до файла
-	Description string `json:"description"` // Описание файла
-	Body        []byte `json:"body"`        // Тело файла
+	Name string `json:"name"` // Путь до файла
+	Body []byte `json:"body"` // Тело файла
 }
 
 func (f *File) GetName() string {

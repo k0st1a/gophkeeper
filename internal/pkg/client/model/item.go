@@ -14,13 +14,20 @@ var (
 )
 
 // Item - описание предмета клиента.
+// Должно быть заполнено одно из полей: Card, Password, Note, File.
 //
 //easyjson:json
 type Item struct {
-	Card     *Card     `json:"card"`
+	// Поле Card заполняется, если предмет содержит информацию о банковской карте.
+	Card *Card `json:"card"`
+	// Поле Password заполняется, если предмет содержит информацию о пароле.
 	Password *Password `json:"password"`
-	Note     *Note     `json:"note"`
-	File     *File     `json:"file"`
+	// Поле Note заполняется, если предмет содержит информацию о заметке (текстовые данные).
+	Note *Note `json:"note"`
+	// Поле File заполняется, если предмет содержит информацию о файле (бинарные данные).
+	File *File `json:"file"`
+	// Поле Meta содержит опциональную информацию о предмете.
+	Meta Meta `json:"meta"`
 }
 
 func (i *Item) GetBody() (any, error) {

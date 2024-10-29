@@ -14,11 +14,11 @@ import (
 )
 
 func TestCreateItem(t *testing.T) {
-	//nolint:dupl // not need here
 	tests := []struct {
 		name    string
 		storage *inmemory.Storage
 		body    any
+		meta    Meta
 	}{
 		{
 			name:    "Check CreateItem Password",
@@ -27,6 +27,10 @@ func TestCreateItem(t *testing.T) {
 				Resource: "Resource",
 				UserName: "Username",
 				Password: "Password",
+			},
+			meta: map[string]string{
+				model.MetaKeyDescription:           "Password description",
+				model.MetaKeyAdditionalInformation: "Password additional information",
 			},
 		},
 		{
@@ -37,6 +41,10 @@ func TestCreateItem(t *testing.T) {
 				Expires: "Expires",
 				Holder:  "Holder",
 			},
+			meta: map[string]string{
+				model.MetaKeyDescription:           "Card description",
+				model.MetaKeyAdditionalInformation: "Card additional information",
+			},
 		},
 		{
 			name:    "Check CreateItem Note",
@@ -45,14 +53,21 @@ func TestCreateItem(t *testing.T) {
 				Name: "Name",
 				Body: "Body",
 			},
+			meta: map[string]string{
+				model.MetaKeyDescription:           "Note description",
+				model.MetaKeyAdditionalInformation: "Note additional information",
+			},
 		},
 		{
 			name:    "Check CreateItem File",
 			storage: inmemory.New(),
 			body: &File{
-				Name:        "Name",
-				Description: "Description",
-				Body:        []byte("body"),
+				Name: "Name",
+				Body: []byte("body"),
+			},
+			meta: map[string]string{
+				model.MetaKeyDescription:           "File description",
+				model.MetaKeyAdditionalInformation: "File additional information",
 			},
 		},
 	}
@@ -60,22 +75,23 @@ func TestCreateItem(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			c := New(test.storage)
 			ctx := context.Background()
-			id, err := c.CreateItem(ctx, test.body)
+			id, err := c.CreateItem(ctx, test.body, test.meta)
 			require.NoError(t, err)
 			item, err := c.GetItem(ctx, id)
 			require.NoError(t, err)
 			require.Equal(t, id, item.ID)
 			require.Equal(t, test.body, item.Body)
+			require.Equal(t, test.meta, item.Meta)
 		})
 	}
 }
 
 func TestDeleteItem(t *testing.T) {
-	//nolint:dupl // not need here
 	tests := []struct {
 		name    string
 		storage *inmemory.Storage
 		body    any
+		meta    map[string]string
 	}{
 		{
 			name:    "Check DeleteItem Password",
@@ -107,9 +123,8 @@ func TestDeleteItem(t *testing.T) {
 			name:    "Check DeleteItem File",
 			storage: inmemory.New(),
 			body: &File{
-				Name:        "Name",
-				Description: "Description",
-				Body:        []byte("body"),
+				Name: "Name",
+				Body: []byte("body"),
 			},
 		},
 	}
@@ -117,7 +132,7 @@ func TestDeleteItem(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			c := New(test.storage)
 			ctx := context.Background()
-			id, err := c.CreateItem(ctx, test.body)
+			id, err := c.CreateItem(ctx, test.body, test.meta)
 			require.NoError(t, err)
 			err = c.DeleteItem(ctx, id)
 			require.NoError(t, err)
@@ -132,7 +147,9 @@ func TestUpdateItem(t *testing.T) {
 		name         string
 		storage      *inmemory.Storage
 		createBodies []any
+		createMetas  []Meta
 		updateBodies []any
+		updateMetas  []Meta
 	}{
 		{
 			name:    "Check UpdateItem",
@@ -153,9 +170,26 @@ func TestUpdateItem(t *testing.T) {
 					Body: "Body",
 				},
 				&File{
-					Name:        "Name",
-					Description: "Description",
-					Body:        []byte("body"),
+					Name: "Name",
+					Body: []byte("body"),
+				},
+			},
+			createMetas: []Meta{
+				Meta{
+					model.MetaKeyDescription:           "Password description",
+					model.MetaKeyAdditionalInformation: "Password additional information",
+				},
+				Meta{
+					model.MetaKeyDescription:           "Card description",
+					model.MetaKeyAdditionalInformation: "Card additional information",
+				},
+				Meta{
+					model.MetaKeyDescription:           "Note description",
+					model.MetaKeyAdditionalInformation: "Note additional information",
+				},
+				Meta{
+					model.MetaKeyDescription:           "File description",
+					model.MetaKeyAdditionalInformation: "File additional information",
 				},
 			},
 			updateBodies: []any{
@@ -174,9 +208,26 @@ func TestUpdateItem(t *testing.T) {
 					Body: "Body updated",
 				},
 				&File{
-					Name:        "Name updated",
-					Description: "Description updated",
-					Body:        []byte("body updated"),
+					Name: "Name updated",
+					Body: []byte("body updated"),
+				},
+			},
+			updateMetas: []Meta{
+				Meta{
+					model.MetaKeyDescription:           "Updated password description",
+					model.MetaKeyAdditionalInformation: "Updated password additional information",
+				},
+				Meta{
+					model.MetaKeyDescription:           "Updated card description",
+					model.MetaKeyAdditionalInformation: "Updated card additional information",
+				},
+				Meta{
+					model.MetaKeyDescription:           "Updated note description",
+					model.MetaKeyAdditionalInformation: "Updated note additional information",
+				},
+				Meta{
+					model.MetaKeyDescription:           "Updated file description",
+					model.MetaKeyAdditionalInformation: "Updated file additional information",
 				},
 			},
 		},
@@ -187,7 +238,7 @@ func TestUpdateItem(t *testing.T) {
 			ctx := context.Background()
 			ids := make([]string, len(test.createBodies))
 			for p, b := range test.createBodies {
-				id, err := c.CreateItem(ctx, b)
+				id, err := c.CreateItem(ctx, b, test.createMetas[p])
 				require.NoError(t, err)
 				ids[p] = id
 			}
@@ -199,6 +250,7 @@ func TestUpdateItem(t *testing.T) {
 			}
 			for p, b := range test.updateBodies {
 				createdItems[p].Body = b
+				createdItems[p].Meta = test.updateMetas[p]
 				err := c.UpdateItem(ctx, createdItems[p])
 				require.NoError(t, err)
 			}
@@ -206,6 +258,7 @@ func TestUpdateItem(t *testing.T) {
 				i, err := c.GetItem(ctx, ci.ID)
 				require.NoError(t, err)
 				require.Equal(t, ci.Body, i.Body)
+				require.Equal(t, ci.Meta, i.Meta)
 				require.Equal(t, ci.CreateTime, i.CreateTime)
 			}
 		})
@@ -228,6 +281,10 @@ func TestListItems(t *testing.T) {
 							Expires: "Expires",
 							Holder:  "Holder",
 						},
+						Meta: model.Meta{
+							"description":            "card description",
+							"additional information": "card additional information",
+						},
 					},
 					CreateTime: time.Date(2024, time.May, 5, 8, 10, 0, 0, time.UTC),
 					UpdateTime: time.Date(2024, time.May, 5, 8, 10, 0, 0, time.UTC),
@@ -241,6 +298,10 @@ func TestListItems(t *testing.T) {
 							Number:  "Number 2",
 							Expires: "Expires 2",
 							Holder:  "Holder 2",
+						},
+						Meta: model.Meta{
+							"description":            "mark deleted card description",
+							"additional information": "mark deleted card additional information",
 						},
 					},
 					CreateTime: time.Date(2024, time.May, 5, 8, 10, 0, 2, time.UTC),
@@ -258,6 +319,10 @@ func TestListItems(t *testing.T) {
 						Number:  "Number",
 						Expires: "Expires",
 						Holder:  "Holder",
+					},
+					Meta: Meta{
+						"description":            "card description",
+						"additional information": "card additional information",
 					},
 					ID: "ID",
 				},
@@ -287,6 +352,7 @@ func TestClear(t *testing.T) {
 		name    string
 		storage *inmemory.Storage
 		bodies  []any
+		metas   []Meta
 	}{
 		{
 			name:    "Check Clear storage",
@@ -307,9 +373,26 @@ func TestClear(t *testing.T) {
 					Body: "Body",
 				},
 				&File{
-					Name:        "Name",
-					Description: "Description",
-					Body:        []byte("body"),
+					Name: "Name",
+					Body: []byte("body"),
+				},
+			},
+			metas: []Meta{
+				Meta{
+					model.MetaKeyDescription:           "Password description",
+					model.MetaKeyAdditionalInformation: "Password additional information",
+				},
+				Meta{
+					model.MetaKeyDescription:           "Card description",
+					model.MetaKeyAdditionalInformation: "Card additional information",
+				},
+				Meta{
+					model.MetaKeyDescription:           "Note description",
+					model.MetaKeyAdditionalInformation: "Note additional information",
+				},
+				Meta{
+					model.MetaKeyDescription:           "File description",
+					model.MetaKeyAdditionalInformation: "File additional information",
 				},
 			},
 		},
@@ -318,8 +401,8 @@ func TestClear(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			c := New(test.storage)
 			ctx := context.Background()
-			for _, b := range test.bodies {
-				_, err := c.CreateItem(ctx, b)
+			for p, b := range test.bodies {
+				_, err := c.CreateItem(ctx, b, test.metas[p])
 				require.NoError(t, err)
 			}
 			items, err := c.ListItems(ctx)

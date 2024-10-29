@@ -14,7 +14,8 @@ var (
 type Item struct {
 	CreateTime time.Time
 	UpdateTime time.Time
-	Body       any // password, card, file, note
+	Body       any  // password, card, file, note
+	Meta       Meta // metainformation for body
 	ID         string
 }
 
@@ -90,9 +91,8 @@ func (n *Note) GetType() string {
 }
 
 type File struct {
-	Name        string
-	Description string
-	Body        []byte
+	Name string
+	Body []byte
 }
 
 func (f *File) GetName() string {
@@ -101,4 +101,14 @@ func (f *File) GetName() string {
 
 func (f *File) GetType() string {
 	return "file"
+}
+
+type Meta map[string]string
+
+func (m Meta) Get(label string) string {
+	return m[label]
+}
+
+func (m Meta) Set(label, value string) {
+	m[label] = value
 }
