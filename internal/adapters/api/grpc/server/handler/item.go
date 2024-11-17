@@ -26,7 +26,7 @@ func (s *ItemServer) CreateItem(ctx context.Context, req *pb.CreateItemRequest) 
 
 	userID, ok := userid.Get(ctx)
 	if !ok {
-		log.Ctx(ctx).Printf(ErrNoUserID.Error())
+		log.Ctx(ctx).Print(ErrNoUserID.Error())
 		//nolint:wrapcheck // not need wrap error from status package
 		return nil, status.Error(codes.Unauthenticated, ErrNoUserID.Error())
 	}
@@ -56,7 +56,7 @@ func (s *ItemServer) UpdateItem(ctx context.Context, req *pb.UpdateItemRequest) 
 
 	userID, ok := userid.Get(ctx)
 	if !ok {
-		log.Ctx(ctx).Printf(ErrNoUserID.Error())
+		log.Ctx(ctx).Print(ErrNoUserID.Error())
 		//nolint:wrapcheck // not need wrap error from status package
 		return nil, status.Error(codes.Unauthenticated, ErrNoUserID.Error())
 	}
@@ -82,7 +82,7 @@ func (s *ItemServer) GetItem(ctx context.Context, req *pb.GetItemRequest) (*pb.G
 
 	userID, ok := userid.Get(ctx)
 	if !ok {
-		log.Ctx(ctx).Printf(ErrNoUserID.Error())
+		log.Ctx(ctx).Print(ErrNoUserID.Error())
 		//nolint:wrapcheck // not need wrap error from status package
 		return nil, status.Error(codes.Unauthenticated, ErrNoUserID.Error())
 	}
@@ -112,7 +112,7 @@ func (s *ItemServer) ListItems(ctx context.Context, req *pb.ListItemsRequest) (*
 
 	userID, ok := userid.Get(ctx)
 	if !ok {
-		log.Ctx(ctx).Printf(ErrNoUserID.Error())
+		log.Ctx(ctx).Print(ErrNoUserID.Error())
 		//nolint:wrapcheck // not need wrap error from status package
 		return nil, status.Error(codes.Unauthenticated, ErrNoUserID.Error())
 	}
@@ -148,7 +148,7 @@ func (s *ItemServer) DeleteItem(ctx context.Context, req *pb.DeleteItemRequest) 
 
 	userID, ok := userid.Get(ctx)
 	if !ok {
-		log.Ctx(ctx).Printf(ErrNoUserID.Error())
+		log.Ctx(ctx).Print(ErrNoUserID.Error())
 		//nolint:wrapcheck // not need wrap error from status package
 		return nil, status.Error(codes.Unauthenticated, ErrNoUserID.Error())
 	}
