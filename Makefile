@@ -158,7 +158,7 @@ test: build statictest
 	go test -v -race -count=1 ./...
 
 .PHONY: cover
-cover:
+cover: cover-clean
 	mkdir -pv ./cover && \
 	go test -v -coverpkg=./... -coverprofile=./cover/cover.profile.tmp ./... && \
 	cat ./cover/cover.profile.tmp \
