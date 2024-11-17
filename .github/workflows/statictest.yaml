@@ -1,11 +1,11 @@
-name: go test
+name: go vet test
 
 on:
   push:
   pull_request:
 
 jobs:
-  test:
+  statictest:
     runs-on: ubuntu-latest
     container: golang:1.22.5
     steps:
@@ -26,5 +26,6 @@ jobs:
           chmod -R +x $GITHUB_WORKSPACE/.tools/statictest
           mv $GITHUB_WORKSPACE/.tools/statictest /usr/local/bin/statictest
 
-      - name: Run test
-        run: make test
+      - name: Run statictest
+        run: |
+          go vet -vettool=$(which statictest) ./...
