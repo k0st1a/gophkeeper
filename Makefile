@@ -151,8 +151,7 @@ godoc:
 
 .PHONY:statictest
 statictest:
-	# statictest не переваривает имя пакета third_party
-	go vet -vettool=$$(which statictest) ./internal/... ./cmd/...
+	go vet -vettool=$$(which statictest) ./...
 
 .PHONY:test
 test: build statictest 
